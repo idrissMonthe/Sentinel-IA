@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Analyse;
+use App\Http\Requests\StoreAnalyseRequest;
 use App\Services\Analyse\AnalyseIAService;
+use App\Services\Analyse\QuotaAnalyseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class AnalyseController extends Controller
 {
-    public function __construct(private AnalyseIAService $analyseIAService)
+    public function __construct(private AnalyseIAService $analyseIAService, private QuotaAnalyseService $quotaService,)
     {
-        // Laravel injecte automatiquement l'implémentation liée dans AppServiceProvider
+       
     }
 
     public function create()
@@ -20,13 +22,18 @@ class AnalyseController extends Controller
     }
 
     // lancerAnalyse() — nécessite un compte (consomme des crédits IA, cf. Module Détection/Analyse)
-    public function store(Request $request): RedirectResponse
+    public function store(StoreAnalyseRequest $request): RedirectResponse
     {
         $data = $request->validate([
             'type' => ['required', 'in:texte,lien,numero,email,image'],
             'contenu' => ['required_without:fichier', 'nullable', 'string'],
             'fichier' => ['required_without:contenu', 'nullable', 'file', 'image', 'max:5120'],
         ]);
+         if ($this->quotaService->quotaAtteint($request->user())) {
+        return back()->withErrors([
+            'type' => "Quota quotidien d'analyses IA atteint. Réessayez demain.",
+        ]);
+    }
 
         // Si image : le service se charge en interne du passage par le Module OCR
         // avant d'appeler l'IA (chaîne include Extraire le texte -> Envoyer à l'IA)

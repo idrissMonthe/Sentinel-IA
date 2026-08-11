@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EntiteSuspecte;
-use App\Models\Signalement;
+use App\Http\Requests\StoreSignalementRequest;
 use App\Http\Requests\SuggestionRedactionRequest;
 use App\Models\Analyse;
+use App\Models\EntiteSuspecte;
+use App\Models\Signalement;
 use App\Services\Analyse\AnalyseIAService;
-use App\Http\Requests\StoreSignalementRequest;
+use App\Services\Analyse\QuotaAnalyseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class SignalementController extends Controller
 {
@@ -28,28 +28,26 @@ class SignalementController extends Controller
         return view('signalements.create');
     }
 
-    // Scénario nominal de la fiche "Signaler une arnaque", alternatives 4.1 et 8.1
+    // Scénario nominal de la fiche "Signaler une arnaque", alternatives 4.1 et 8.1.
+    // Correction : $request->validated() remplace l'ancien $request->validate([...]) en dur,
+    // qui dupliquait la validation déjà faite par StoreSignalementRequest et ignorait analyse_id.
     public function store(StoreSignalementRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'type' => ['required', 'in:numero,email,lien'],
-            'valeur' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
-            'ville' => ['nullable', 'string', 'max:255'],
+        $data = $request->validated();
+
+        // 8.1 : entité déjà existante ou création à la volée
+        $entite = EntiteSuspecte::firstOrCreate(
+            ['type' => $data['type'], 'valeur' => $data['valeur']],
+        );
+
+        $doublonPotentiel = $entite->nombre_signalement >= 5;
+
+        $signalement = $request->user()->signalements()->create([
+            'entite_suspecte_id' => $entite->id,
+            'analyse_id' => $data['analyse_id'] ?? null, // lien vers l'analyse réutilisée/générée
+            'description' => $data['description'],
+            'ville' => $data['ville'] ?? null,
         ]);
-
-    $entite = EntiteSuspecte::firstOrCreate(
-        ['type' => $data['type'], 'valeur' => $data['valeur']],
-    );
-
-    $doublonPotentiel = $entite->nombre_signalement >= 5;
-
-    $signalement = $request->user()->signalements()->create([
-        'entite_suspecte_id' => $entite->id,
-        'analyse_id' => $data['analyse_id'] ?? null, // <-- ajout : lien vers l'analyse réutilisée/générée
-        'description' => $data['description'],
-        'ville' => $data['ville'] ?? null,
-    ]);
 
         return redirect()
             ->route('signalements.show', $signalement)
@@ -60,55 +58,62 @@ class SignalementController extends Controller
 
     public function show(Signalement $signalement)
     {
-       $this->authorize('view', $signalement);
+        $this->authorize('view', $signalement);
 
-    $signalement->load(['preuves', 'entiteSuspecte', 'moderateur']);
+        $signalement->load(['preuves', 'entiteSuspecte', 'moderateur']);
 
         return view('signalements.show', compact('signalement'));
     }
-    public function suggestionIA(SuggestionRedactionRequest $request, AnalyseIAService $service): RedirectResponse
-{
-    $data = $request->validated();
 
-    if (! empty($data['analyse_id'])) {
-        // Chemin gratuit : réutilisation d'une analyse déjà payée
-        $analyse = Analyse::findOrFail($data['analyse_id']);
-        $appelFacture = false;
-    } else {
-        // Chemin payant : un seul appel, uniquement parce que l'utilisateur
-        // a cliqué explicitement sur "Aide à la rédaction" (pas de déclenchement automatique)
-        $quota = config('vigilia.quota_analyses_jour');
-        $utiliseAujourdhui = $request->user()->analyses()->whereDate('created_at', today())->count();
+    // Rédiger un signalement assisté par IA : <<extend>> de Signaler une arnaque,
+    // <<include>> de Analyser un contenu avec l'IA.
+    // Correction : la vérification de quota passe maintenant par QuotaAnalyseService,
+    // le même service que celui utilisé dans AnalyseController::store() — avant cette
+    // correction, le quota n'était vérifié qu'ici et jamais côté "Analyser un contenu",
+    // ce qui permettait de contourner la limite journalière en passant par l'autre porte d'entrée.
+    public function suggestionIA(
+        SuggestionRedactionRequest $request,
+        AnalyseIAService $service,
+        QuotaAnalyseService $quotaService,
+    ): RedirectResponse {
+        $data = $request->validated();
 
-        if ($utiliseAujourdhui >= $quota) {
-            return back()->withErrors([
-                'analyse_id' => "Quota quotidien d'analyses IA atteint ({$quota}/jour). Réessayez demain, ou décrivez le signalement manuellement.",
+        if (! empty($data['analyse_id'])) {
+            // Chemin gratuit : réutilisation d'une analyse déjà payée, aucun appel IA
+            $analyse = Analyse::findOrFail($data['analyse_id']);
+            $appelFacture = false;
+        } else {
+            // Chemin payant : un seul appel, uniquement parce que l'utilisateur
+            // a cliqué explicitement sur "Aide à la rédaction" (jamais déclenché automatiquement)
+            if ($quotaService->quotaAtteint($request->user())) {
+                return back()->withErrors([
+                    'analyse_id' => "Quota quotidien d'analyses IA atteint. Réessayez demain, ou décrivez le signalement manuellement.",
+                ]);
+            }
+
+            [$score, $conclusion] = $service->analyser($data['type'], $data['contenu']);
+
+            $analyse = $request->user()->analyses()->create([
+                'date_analyse' => now(),
+                'score_fiabilite' => $score,
+                'conclusion' => $conclusion,
             ]);
+            $appelFacture = true;
         }
 
-        [$score, $conclusion] = $service->analyser($data['type'], $data['contenu']);
+        $suggestion = sprintf(
+            "Contenu suspect détecté (score de fiabilité IA : %s%%).\n\n%s",
+            $analyse->score_fiabilite,
+            $analyse->conclusion
+        );
 
-        $analyse = $request->user()->analyses()->create([
-            'date_analyse' => now(),
-            'score_fiabilite' => $score,
-            'conclusion' => $conclusion,
-            ]);
-        $appelFacture = true;
+        // Renvoie vers le formulaire de création avec la description pré-remplie,
+        // modifiable par l'utilisateur avant validation finale (jamais envoyée telle quelle)
+        return back()->withInput([
+            'description' => $suggestion,
+            'analyse_id' => $analyse->id,
+        ])->with('status', $appelFacture
+            ? 'Suggestion générée (1 appel IA consommé).'
+            : 'Suggestion générée à partir d\'une analyse existante — aucun appel IA supplémentaire.');
     }
-
-    $suggestion = sprintf(
-        "Contenu suspect détecté (score de fiabilité IA : %s%%).\n\n%s",
-        $analyse->score_fiabilite,
-        $analyse->conclusion
-    );
-
-    // Renvoie vers le formulaire de création avec la description pré-remplie,
-    // modifiable par l'utilisateur avant validation finale (jamais envoyée telle quelle)
-    return back()->withInput([
-        'description' => $suggestion,
-        'analyse_id' => $analyse->id,
-    ])->with('status', $appelFacture
-        ? 'Suggestion générée (1 appel IA consommé).'
-        : 'Suggestion générée à partir d\'une analyse existante — aucun appel IA supplémentaire.');
-}
 }
