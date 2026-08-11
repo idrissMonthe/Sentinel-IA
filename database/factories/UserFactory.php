@@ -25,7 +25,8 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'nom' => fake()->lastName(),
+            'prenom' => fake()->firstName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
@@ -40,6 +41,18 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+    public function administrateur(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => \App\Enums\UserRole::ADMINISTRATEUR,
+        ]);
+    }
+     public function moderateur(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => \App\Enums\UserRole::MODERATEUR,
         ]);
     }
 }

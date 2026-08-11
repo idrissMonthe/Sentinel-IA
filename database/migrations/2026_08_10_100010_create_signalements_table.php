@@ -13,11 +13,17 @@ return new class extends Migration
     {
         Schema::create('signalements', function (Blueprint $table) {
             $table->id();
-            $table->string ('titre');
-            $table->text ('contenu');
+            $table->foreignId ('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId ('moderateur_id')->nullable()->constrained('users');
+            $table->foreignId ('entite_suspecte_id')->nullable()->constrained();
+            $table->string ('titre')->nullable();
+            $table->text ('description');
+            $table->string ('ville')->nullable();
+            $table->string ('statut')->default('en_attente');
+            $table->text ('contenu')->nullable();
             $table-> boolean ('est_publie')->default (false);
             // contient : 1 Signalement -- 0..1 Analyse (réutilisation d'une analyse existante)
-            $table->foreignId('analyse_id')->nullable()->constrained('analyses')->nullOnDelete();
+            $table->foreignId('analyse_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }

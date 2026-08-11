@@ -9,10 +9,6 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
-        //
-    }
 
     /**
      * Bootstrap any application services.
@@ -21,4 +17,11 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
+    public function register(): void
+{
+    $this->app->bind(
+        \App\Services\Analyse\AnalyseIAService::class,
+        \App\Services\Analyse\GeminiAnalyseIAService::class
+    );
+}
 }
