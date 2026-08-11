@@ -14,7 +14,7 @@ class Signalement extends Model
 
     protected $fillable = [
         'user_id', 'moderateur_id', 'entite_suspecte_id',
-        'description', 'ville', 'statut',
+        'description', 'ville', 'statut', 'analyse_id'
     ];
 
     protected function casts(): array
@@ -38,6 +38,10 @@ class Signalement extends Model
     public function entiteSuspecte(): BelongsTo
     {
         return $this->belongsTo(EntiteSuspecte::class);
+    }
+    public function analyse(): BelongsTo 
+    { 
+        return $this->belongsTo(Analyse::class); 
     }
 
     // contient : 1 Signalement -- 1..* Preuve

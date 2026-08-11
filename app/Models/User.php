@@ -21,6 +21,7 @@ class User extends Authenticatable
         'telephone',
         'statut',
         'role',
+        'tentatives_echouees',
     ];
 
     protected $hidden = [
@@ -39,6 +40,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Signalement::class);
     }
+    public function analyses(): HasMany 
+    { 
+        return $this->hasMany(Analyse::class); 
+    }
+
      public function alertesPubliees(): HasMany
     {
         return $this->hasMany(Alerte::class, 'moderateur_id');

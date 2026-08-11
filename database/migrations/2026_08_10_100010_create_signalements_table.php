@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string ('titre');
             $table->text ('contenu');
             $table-> boolean ('est_publie')->default (false);
+            // contient : 1 Signalement -- 0..1 Analyse (réutilisation d'une analyse existante)
+            $table->foreignId('analyse_id')->nullable()->constrained('analyses')->nullOnDelete();
             $table->timestamps();
         });
     }
