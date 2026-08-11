@@ -9,15 +9,12 @@ use Illuminate\Http\Request;
 
 class ModerationController extends Controller
 {
-    private function verifierAccesModerateur(Request $request): void
-    {
-        abort_unless($request->user()->estModerateur(), 403);
-    }
+
 
     // File d'attente de modération
     public function index(Request $request)
     {
-        $this->verifierAccesModerateur($request);
+        $this->authorize('moderer', Signalement::class );
 
         $signalements = Signalement::where('statut', StatutSignalement::EN_ATTENTE)
             ->with(['utilisateur', 'entiteSuspecte'])
@@ -30,7 +27,7 @@ class ModerationController extends Controller
     // VerifierSignalement() -> validation
     public function valider(Request $request, Signalement $signalement): RedirectResponse
     {
-        $this->verifierAccesModerateur($request);
+        $this->authorize('valider', $signalement);
 
         $signalement->update([
             'statut' => StatutSignalement::VALIDE,
@@ -46,7 +43,7 @@ class ModerationController extends Controller
     // SupprimerFauxSignalement()
     public function rejeter(Request $request, Signalement $signalement): RedirectResponse
     {
-        $this->verifierAccesModerateur($request);
+        $this->authorize('rejeter', $signalement);
 
         $signalement->update([
             'statut' => StatutSignalement::REJETE,
@@ -59,7 +56,7 @@ class ModerationController extends Controller
     // GererDoublons() : entités suspectes ayant plusieurs signalements en attente
     public function doublons(Request $request)
     {
-        $this->verifierAccesModerateur($request);
+        $this->authorize('moderer',Signalement::class);
 
         $entites = \App\Models\EntiteSuspecte::withCount([
             'signalements as signalements_en_attente_count' => fn ($q) => $q->where('statut', StatutSignalement::EN_ATTENTE),

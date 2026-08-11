@@ -8,9 +8,18 @@ class StoreSignalementRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // La route est déjà protégée par le middleware 'auth' ;
-        // ce champ garde la Request explicite sur ses préconditions
-        return $this->user() !== null;
+           if (! $this->user()) {
+        return false;
+    }
+
+    if ($this->filled('analyse_id')) {
+        return \App\Models\Analyse::where('id', $this->input('analyse_id'))
+            ->where('user_id', $this->user()->id)
+            ->exists();
+    }
+
+    return true;
+
     }
 
     public function rules(): array
@@ -20,6 +29,7 @@ class StoreSignalementRequest extends FormRequest
             'valeur' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'ville' => ['nullable', 'string', 'max:255'],
+            'analyse_id' => ['nullable', 'integer', 'exists:analyses,id'],
         ];
     }
 

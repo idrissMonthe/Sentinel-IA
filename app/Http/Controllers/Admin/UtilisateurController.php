@@ -12,7 +12,7 @@ class UtilisateurController extends Controller
     // gererUtilisateur()
     public function index(Request $request)
     {
-        abort_unless($request->user()->estAdministrateur(), 403);
+        $this->authorize('viewAny', User::class);
 
         $utilisateurs = User::latest()->paginate(20);
 
@@ -21,7 +21,7 @@ class UtilisateurController extends Controller
 
     public function bloquer(Request $request, User $user): RedirectResponse
     {
-        abort_unless($request->user()->estAdministrateur(), 403);
+        $this->authorize('bloquer', $user);
 
         $user->update(['statut' => 'bloque']);
 
@@ -30,7 +30,7 @@ class UtilisateurController extends Controller
 
     public function debloquer(Request $request, User $user): RedirectResponse
     {
-        abort_unless($request->user()->estAdministrateur(), 403);
+        $this->authorize('debloquer', $user);
 
         $user->update(['statut' => 'actif', 'tentatives_echouees' => 0]);
 

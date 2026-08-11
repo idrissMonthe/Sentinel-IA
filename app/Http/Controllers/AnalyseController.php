@@ -44,10 +44,10 @@ class AnalyseController extends Controller
         return redirect()->route('analyses.show', $analyse);
     }
 
-    public function show(Request $request, Analyse $analyse)
+    public function show(Analyse $analyse)
     {
         // Vérifie que l'analyse appartient bien à l'utilisateur courant
-        abort_unless($analyse->user_id === $request->user()?->id, 403);
+        $this->authorize('view', $analyse);
 
         // afficher des conseils : <<extend>> de Analyser un contenu, calculé simplement
         // à partir du score plutôt que par un nouvel appel IA (aucun coût supplémentaire)
@@ -63,8 +63,7 @@ class AnalyseController extends Controller
     // genererRapport() — <<extend>> de Consulter l'historique / Suivre un signalement
     public function genererRapport(Analyse $analyse)
     {
-        // Utiliser la façade Auth::id() pour éviter les warnings d'analyse statique
-        abort_unless($analyse->user_id === \Auth::id(), 403);
+        $this->authorize('view', $analyse);
 
         // Génération PDF à implémenter (ex. barryvdh/laravel-dompdf) — non détaillée ici,
         // hors périmètre "contrôleur", relève d'une bibliothèque tierce à choisir avec vous.

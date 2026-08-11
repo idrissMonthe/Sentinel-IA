@@ -8,11 +8,10 @@ class StorePreuveRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Déplacé ici depuis le abort_unless() du contrôleur : vérifier le droit d'agir
-        // sur la ressource ciblée par la route est la responsabilité naturelle d'une Request.
+        
         $signalement = $this->route('signalement');
 
-        return $signalement && $signalement->user_id === $this->user()?->id;
+        return $signalement && $this->user()?->can('create', [\App\Models\Preuve::class, $signalement]);
     }
 
     public function rules(): array

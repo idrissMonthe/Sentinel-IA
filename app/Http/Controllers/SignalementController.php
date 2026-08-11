@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\EntiteSuspecte;
 use App\Models\Signalement;
+use App\Http\Requests\SuggestionRedactionRequest;
+use App\Models\Analyse;
+use App\Services\Analyse\AnalyseIAService;
 use App\Http\Requests\StoreSignalementRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,19 +38,18 @@ class SignalementController extends Controller
             'ville' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // 8.1 : entité déjà existante ou création à la volée
-        $entite = EntiteSuspecte::firstOrCreate(
-            ['type' => $data['type'], 'valeur' => $data['valeur']],
-        );
+    $entite = EntiteSuspecte::firstOrCreate(
+        ['type' => $data['type'], 'valeur' => $data['valeur']],
+    );
 
-        $doublonPotentiel = $entite->nombre_signalement >= 5;
+    $doublonPotentiel = $entite->nombre_signalement >= 5;
 
-        $signalement = $request->user()->signalements()->create([
-            'entite_suspecte_id' => $entite->id,
-            'description' => $data['description'],
-            'ville' => $data['ville'] ?? null,
-            // statut par défaut = EN_ATTENTE (défini dans la migration)
-        ]);
+    $signalement = $request->user()->signalements()->create([
+        'entite_suspecte_id' => $entite->id,
+        'analyse_id' => $data['analyse_id'] ?? null, // <-- ajout : lien vers l'analyse réutilisée/générée
+        'description' => $data['description'],
+        'ville' => $data['ville'] ?? null,
+    ]);
 
         return redirect()
             ->route('signalements.show', $signalement)
@@ -58,15 +60,55 @@ class SignalementController extends Controller
 
     public function show(Signalement $signalement)
     {
-        // Seul le déclarant, un modérateur ou un administrateur peuvent voir le détail
-        $user = Auth::user() ?? abort(401);
-        abort_unless(
-            $signalement->user_id === $user->id || $user->estModerateur() || $user->estAdministrateur(),
-            403
-        );
+       $this->authorize('view', $signalement);
 
-        $signalement->load(['preuves', 'entiteSuspecte', 'moderateur']);
+    $signalement->load(['preuves', 'entiteSuspecte', 'moderateur']);
 
         return view('signalements.show', compact('signalement'));
     }
+    public function suggestionIA(SuggestionRedactionRequest $request, AnalyseIAService $service): RedirectResponse
+{
+    $data = $request->validated();
+
+    if (! empty($data['analyse_id'])) {
+        // Chemin gratuit : réutilisation d'une analyse déjà payée
+        $analyse = Analyse::findOrFail($data['analyse_id']);
+        $appelFacture = false;
+    } else {
+        // Chemin payant : un seul appel, uniquement parce que l'utilisateur
+        // a cliqué explicitement sur "Aide à la rédaction" (pas de déclenchement automatique)
+        $quota = config('vigilia.quota_analyses_jour');
+        $utiliseAujourdhui = $request->user()->analyses()->whereDate('created_at', today())->count();
+
+        if ($utiliseAujourdhui >= $quota) {
+            return back()->withErrors([
+                'analyse_id' => "Quota quotidien d'analyses IA atteint ({$quota}/jour). Réessayez demain, ou décrivez le signalement manuellement.",
+            ]);
+        }
+
+        [$score, $conclusion] = $service->analyser($data['type'], $data['contenu']);
+
+        $analyse = $request->user()->analyses()->create([
+            'date_analyse' => now(),
+            'score_fiabilite' => $score,
+            'conclusion' => $conclusion,
+            ]);
+        $appelFacture = true;
+    }
+
+    $suggestion = sprintf(
+        "Contenu suspect détecté (score de fiabilité IA : %s%%).\n\n%s",
+        $analyse->score_fiabilite,
+        $analyse->conclusion
+    );
+
+    // Renvoie vers le formulaire de création avec la description pré-remplie,
+    // modifiable par l'utilisateur avant validation finale (jamais envoyée telle quelle)
+    return back()->withInput([
+        'description' => $suggestion,
+        'analyse_id' => $analyse->id,
+    ])->with('status', $appelFacture
+        ? 'Suggestion générée (1 appel IA consommé).'
+        : 'Suggestion générée à partir d\'une analyse existante — aucun appel IA supplémentaire.');
+}
 }
