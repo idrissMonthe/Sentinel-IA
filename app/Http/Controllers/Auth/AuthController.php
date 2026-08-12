@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\http\Requests\Auth\RegisterUserRequest;
+use App\http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,13 +18,7 @@ class AuthController extends Controller
     // Correspond à l'alternative 2.1 : création de compte (Visiteur -> Utilisateur)
     public function register(RegisterUserRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'nom' => ['required', 'string', 'max:255'],
-            'prenom' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'telephone' => ['nullable', 'string', 'max:20'],
-            'password' => ['required', 'confirmed', 'min:8'],
-        ]);
+        $data = $request->validated();
 
         $user = User::create([
             'nom' => $data['nom'],
@@ -40,7 +35,7 @@ class AuthController extends Controller
     }
 
     // Scénario nominal + exceptions 4.1, 5.1, 5.2 de la fiche "S'authentifier"
-    public function login(RegisterUserRequest $request): RedirectResponse
+    public function login(LoginRequest $request): RedirectResponse
     {
         // 4.1 : champs manquants -> géré automatiquement par validate()
         $credentials = $request->validate([

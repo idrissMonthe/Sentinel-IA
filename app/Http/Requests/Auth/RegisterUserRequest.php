@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Contracts\Validation\Validator;;
 
 class RegisterUserRequest extends FormRequest
 {
@@ -21,5 +23,10 @@ class RegisterUserRequest extends FormRequest
             'telephone' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'confirmed', 'min:8'],
         ];
+    }
+    protected function failedValidation(Validator $validator): void
+     {
+        throw (new ValidationException($validator))
+            ->redirectTo(route('login'));
     }
 }

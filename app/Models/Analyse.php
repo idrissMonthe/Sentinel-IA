@@ -12,4 +12,7 @@ class Analyse extends Model
 
     public function utilisateur(): BelongsTo { return $this->belongsTo(User::class); }
     public function signalement(): HasOne { return $this->hasOne(Signalement::class); }
+    protected $casts = [
+        'date_analyse' => 'datetime',
+    ];
 }

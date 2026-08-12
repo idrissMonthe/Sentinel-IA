@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('telephone')->nullable();
             $table->string('role')->default('UTILISATEUR');
+            $table->integer('tentatives_echouees')->default(0);
             $table->enum('statut', ['actif', 'bloque'])->default('actif');
             $table->rememberToken();
             $table->timestamps();

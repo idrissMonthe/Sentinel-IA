@@ -12,12 +12,7 @@ use App\Http\Controllers\PreuveController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatistiqueController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-Route::middleware('auth')->post('/signalements/suggestion-ia', [SignalementController::class, 'suggestionIA'])
-    ->name('signalements.suggestion-ia');
-    /*
+/*
 |--------------------------------------------------------------------------
 | Support — accueil (page publique, aucune logique métier)
 |--------------------------------------------------------------------------
@@ -40,6 +35,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/inscription', [AuthController::class, 'register'])->name('register.store');
     Route::post('/connexion', [AuthController::class, 'login'])->name('login.store');
 });
+
 Route::middleware('auth')->post('/deconnexion', [AuthController::class, 'logout'])->name('logout');
 
 /*
@@ -48,10 +44,12 @@ Route::middleware('auth')->post('/deconnexion', [AuthController::class, 'logout'
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->prefix('profil')->name('profile.')->group(function () {
+    Route::view('/edition', 'profile.edit')->name('edit'); // Route d'édition sécurisée
     Route::put('/', [ProfileController::class, 'update'])->name('update');
     Route::put('/mot-de-passe', [ProfileController::class, 'updatePassword'])->name('password.update');
     Route::get('/historique', [ProfileController::class, 'historique'])->name('historique');
 });
+
 /*
 |--------------------------------------------------------------------------
 | PILIER 2 — Signalement et base collaborative
@@ -64,9 +62,10 @@ Route::prefix('base-collaborative')->name('base-collaborative.')->group(function
     Route::get('/', [EntiteSuspecteController::class, 'index'])->name('index');
     Route::get('/{entiteSuspecte}', [EntiteSuspecteController::class, 'show'])->name('show');
 });
+
 // Signaler une arnaque / Suivre un signalement / Fournir une preuve : AUTHENTIFIÉ
 Route::middleware('auth')->prefix('signalements')->name('signalements.')->group(function () {
-    Route::get('/', [SignalementController::class, 'index'])->name('index');           // Suivre un signalement
+    Route::get('/', [SignalementController::class, 'index'])->name('index');          // Suivre un signalement
     Route::get('/creer', [SignalementController::class, 'create'])->name('create');
     Route::post('/', [SignalementController::class, 'store'])->name('store');
     Route::get('/{signalement}', [SignalementController::class, 'show'])->name('show'); // protégé par SignalementPolicy::view
@@ -77,6 +76,7 @@ Route::middleware('auth')->prefix('signalements')->name('signalements.')->group(
     // Fournir une preuve (<<include>>, nichée sous un signalement précis)
     Route::post('/{signalement}/preuves', [PreuveController::class, 'store'])->name('preuves.store');
 });
+
 /*
 |--------------------------------------------------------------------------
 | PILIER 1 — Détection et analyse intelligente
@@ -85,9 +85,10 @@ Route::middleware('auth')->prefix('signalements')->name('signalements.')->group(
 Route::middleware('auth')->prefix('analyses')->name('analyses.')->group(function () {
     Route::get('/creer', [AnalyseController::class, 'create'])->name('create');
     Route::post('/', [AnalyseController::class, 'store'])->name('store');
-    Route::get('/{analyse}', [AnalyseController::class, 'show'])->name('show');           // protégé par AnalysePolicy::view
+    Route::get('/{analyse}', [AnalyseController::class, 'show'])->name('show');          // protégé par AnalysePolicy::view
     Route::get('/{analyse}/rapport', [AnalyseController::class, 'genererRapport'])->name('rapport'); // <<extend>>
 });
+
 /*
 |--------------------------------------------------------------------------
 | Support — Modération (garant de la fiabilité du Pilier 2)
@@ -101,6 +102,7 @@ Route::middleware('auth')->prefix('moderation')->name('moderation.')->group(func
     Route::patch('/{signalement}/valider', [ModerationController::class, 'valider'])->name('valider');
     Route::patch('/{signalement}/rejeter', [ModerationController::class, 'rejeter'])->name('rejeter');
 });
+
 /*
 |--------------------------------------------------------------------------
 | Support — Alertes
@@ -115,6 +117,7 @@ Route::prefix('alertes')->name('alertes.')->group(function () {
         Route::post('/', [AlerteController::class, 'store'])->name('store');
     });
 });
+
 /*
 |--------------------------------------------------------------------------
 | Support — Statistiques publiques

@@ -18,18 +18,19 @@ class GeminiAnalyseIAService implements AnalyseIAService
             ? $this->construirePartsImage($contenu)
             : [['text' => $this->construirePrompt($type, $contenu)]];
 
-        $reponse = Http::timeout(20) // un peu plus long : l'upload d'image prend plus de temps
+        $reponse = Http::withoutVerifying() // un peu plus long : l'upload d'image prend plus de temps
+            ->timeout(20)
             ->retry(1, 500)
             ->post(
                 sprintf(
                     'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
-                    config('services.gemini.model'),
-                    config('services.gemini.key')
+                    env('GEMINI_MODEL','gemini-3.6-flash'),
+                    env('GEMINI_API_KEY')
                 ),
                 [
                     'contents' => [['parts' => $parts]],
                     'generationConfig' => [
-                        'temperature' => 0.2,
+                        'temperature' => 0.3,
                         'responseMimeType' => 'application/json',
                     ],
                 ]
