@@ -32,7 +32,7 @@ class EntiteSuspecteController extends Controller
         $signalements = $entiteSuspecte->signalements()
             ->where('statut', 'valide')
             ->latest()
-            ->get();
+            ->paginate(5);
 
         return view('base-collaborative.show', compact('entiteSuspecte', 'signalements'));
     }

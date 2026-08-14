@@ -14,7 +14,7 @@
     </p>
 
     <div style="display: flex; flex-direction: column; gap: 30px;">
-        @forelse ($entitesDoublons as $entite)
+        @forelse ($entitesDoublons ?? [] as $entite)
             <div class="card" style="border-left: 4px solid var(--warning);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-glow); padding-bottom: 15px;">
                     <div>

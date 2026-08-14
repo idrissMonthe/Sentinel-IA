@@ -62,7 +62,7 @@ class ModerationController extends Controller
             'signalements as signalements_en_attente_count' => fn ($q) => $q->where('statut', StatutSignalement::EN_ATTENTE),
         ])
             ->having('signalements_en_attente_count', '>', 1)
-            ->get();
+            ->paginate(10);
 
         return view('moderation.doublons', compact('entites'));
     }

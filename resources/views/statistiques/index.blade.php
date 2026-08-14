@@ -31,7 +31,7 @@
         <div class="card">
             <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-glow); padding-bottom: 10px;">Types de menaces les plus signalés</h3>
             <ul style="list-style: none; padding: 0; margin: 0;">
-                @forelse($topTypes as $type => $count)
+                @forelse($topTypes ?? [] as $type => $count)
                     <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <span style="font-weight: bold; color: var(--text-secondary);">{{ ucfirst($type) }}</span>
                         <span style="color: var(--danger); font-weight: bold;">{{ $count }} signalements</span>
@@ -46,7 +46,7 @@
         <div class="card">
             <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-glow); padding-bottom: 10px;">Zones les plus touchées</h3>
             <ul style="list-style: none; padding: 0; margin: 0;">
-                @forelse($topVilles as $ville => $count)
+                @forelse($topVilles ?? [] as $ville => $count)
                     <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <span style="font-weight: bold; color: var(--text-secondary);">{{ $ville ?: 'Non renseigné' }}</span>
                         <span style="color: var(--warning); font-weight: bold;">{{ $count }} cas</span>

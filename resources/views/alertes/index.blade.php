@@ -15,7 +15,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h2 style="margin: 0; font-size: 1.4rem; color: var(--warning);">{{ $alerte->titre }}</h2>
                     <span class="text-secondary" style="font-size: 0.9rem;">
-                        Publié le {{ $alerte->created_at->format('d/m/Y à H:i') }} par {{ $alerte->auteur->nom }}
+                        Publié le {{ $alerte->created_at->format('d/m/Y à H:i') }} par {{ $alerte->auteur?->prenom ?? $alerte->auteur?->nom ?? 'L\'équipe SENTINEL' }}
                     </span>
                 </div>
                 <div style="color: var(--text-primary); line-height: 1.6; white-space: pre-line;">
