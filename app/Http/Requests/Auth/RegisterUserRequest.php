@@ -4,7 +4,10 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Contracts\Validation\Validator;;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Validation\Rules\Password;
+
+;
 
 class RegisterUserRequest extends FormRequest
 {
@@ -21,12 +24,12 @@ class RegisterUserRequest extends FormRequest
             'prenom' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'telephone' => ['nullable', 'string', 'max:20'],
-            'password' => ['required', 'confirmed', 'min:8'],
+            'password' => ['required', 'confirmed', Password::min(8),]
         ];
     }
     protected function failedValidation(Validator $validator): void
      {
         throw (new ValidationException($validator))
-            ->redirectTo(route('login'));
+            ->redirectTo(route('register'));
     }
 }

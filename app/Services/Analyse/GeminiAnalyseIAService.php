@@ -72,7 +72,7 @@ Tu es un module de détection d'arnaques numériques pour le Cameroun (fraude Mo
 fausses offres d'emploi, loteries fictives, arnaques sentimentales).
 Analyse le contenu suivant, de type "{$type}", et réponds UNIQUEMENT avec un objet JSON strict,
 sans texte ni balise markdown autour, au format exact :
-{"score_fiabilite": <entier entre 0 et 100, 100 = très probablement une arnaque>, "conclusion": "<2 phrases maximum, en français, expliquant le score>"}
+{"score_fiabilite": <entier entre 0 et 100, 100 = très probablement une arnaque>, "conclusion": "<3 phrases maximum, en français, expliquant le score et en donnant des mesures à suivre pour ne pas se faire arnaquer en rapport avec le type de l'arnaque>"}
 
 Contenu à analyser :
 """

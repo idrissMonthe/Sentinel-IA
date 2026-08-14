@@ -20,17 +20,17 @@
 
 <div class="features-grid">
     <div class="card">
-        <h3>🔍 Détection IA</h3>
+        <h3>Détection IA</h3>
         <p>Soumettez un SMS, une image ou un numéro pour obtenir instantanément un score de fiabilité calculé par intelligence artificielle.</p>
     </div>
 
     <div class="card">
-        <h3>🛡️ Base Collaborative</h3>
+        <h3>Base Collaborative</h3>
         <p>Recherchez un numéro, un lien ou une adresse email dans notre base mise à jour par les signalements vérifiés de la communauté.</p>
     </div>
 
     <div class="card">
-        <h3>📢 Alertes de Modération</h3>
+        <h3>Alertes de Modération</h3>
         <p>Consultez les mises en garde officielles publiées par nos modérateurs sur les nouvelles vagues de fraudes (Mobile Money, fausses offres...).</p>
     </div>
 </div>
