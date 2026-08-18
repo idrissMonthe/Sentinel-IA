@@ -72,8 +72,6 @@ class AnalyseController extends Controller
     {
         $this->authorize('view', $analyse);
 
-        // Génération PDF à implémenter (ex. barryvdh/laravel-dompdf) — non détaillée ici,
-        // hors périmètre "contrôleur", relève d'une bibliothèque tierce à choisir avec vous.
         return view('analyses.rapport', compact('analyse'));
     }
 }

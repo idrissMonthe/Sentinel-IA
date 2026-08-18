@@ -2,6 +2,7 @@
 
 namespace App\Services\Analyse;
 
+
 class RulesBasedAnalyseIAService implements AnalyseIAService
 {
     // Vocabulaire volontairement ancré dans les arnaques fréquentes au Cameroun
@@ -35,4 +36,15 @@ class RulesBasedAnalyseIAService implements AnalyseIAService
 
         return [$score, $conclusion];
     }
+    public function ameliorerRedaction(string $type, string $contenuBrut): string
+{
+    $texte = trim($contenuBrut);
+    $texte = mb_strtoupper(mb_substr($texte, 0, 1)).mb_substr($texte, 1);
+
+    if (! in_array(mb_substr($texte, -1), ['.', '!', '?'], true)) {
+        $texte .= '.';
+    }
+
+    return $texte."\n\n(Mode dégradé : reformulation automatique indisponible pour le moment, texte affiché après mise en forme minimale seulement.)";
+}
 }

@@ -10,4 +10,5 @@ interface AnalyseIAService
      * (cf. <<include>> Analyser une image -> Extraire le texte du diagramme de cas d'utilisation).
      */
     public function analyser(string $type, string $contenu): array;
+    public function ameliorerRedaction(string $type, string $contenuBrut): string;
 }

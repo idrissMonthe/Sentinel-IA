@@ -67,10 +67,6 @@ class SignalementController extends Controller
 
     // Rédiger un signalement assisté par IA : <<extend>> de Signaler une arnaque,
     // <<include>> de Analyser un contenu avec l'IA.
-    // Correction : la vérification de quota passe maintenant par QuotaAnalyseService,
-    // le même service que celui utilisé dans AnalyseController::store() — avant cette
-    // correction, le quota n'était vérifié qu'ici et jamais côté "Analyser un contenu",
-    // ce qui permettait de contourner la limite journalière en passant par l'autre porte d'entrée.
     public function suggestionIA(
         SuggestionRedactionRequest $request,
         AnalyseIAService $service,
@@ -79,41 +75,38 @@ class SignalementController extends Controller
         $data = $request->validated();
 
         if (! empty($data['analyse_id'])) {
-            // Chemin gratuit : réutilisation d'une analyse déjà payée, aucun appel IA
+            // Réutilisation d'une analyse de fraude déjà faite (venant de analyses/show,
+            // lien "Signaler cette arnaque") : gratuit, aucun nouvel appel IA.
             $analyse = Analyse::findOrFail($data['analyse_id']);
-            $appelFacture = false;
-        } else {
-            // Chemin payant : un seul appel, uniquement parce que l'utilisateur
-            // a cliqué explicitement sur "Aide à la rédaction" (jamais déclenché automatiquement)
-            if ($quotaService->quotaAtteint($request->user())) {
-                return back()->withErrors([
-                    'analyse_id' => "Quota quotidien d'analyses IA atteint. Réessayez demain, ou décrivez le signalement manuellement.",
-                ]);
-            }
 
-            [$score, $conclusion] = $service->analyser($data['type'], $data['contenu']);
+            $suggestion = sprintf(
+                "Contenu suspect détecté (score de fiabilité IA : %s%%).\n\n%s",
+                $analyse->score_fiabilite,
+                $analyse->conclusion
+            );
 
-            $analyse = $request->user()->analyses()->create([
-                'date_analyse' => now(),
-                'score_fiabilite' => $score,
-                'conclusion' => $conclusion,
-            ]);
-            $appelFacture = true;
+            return back()->withInput(['description' => $suggestion, 'analyse_id' => $analyse->id])
+                ->with('status', 'Description pré-remplie à partir d\'une analyse existante — aucun appel IA supplémentaire.');
         }
 
-        $suggestion = sprintf(
-            "Contenu suspect détecté (score de fiabilité IA : %s%%).\n\n%s",
-            $analyse->score_fiabilite,
-            $analyse->conclusion
-        );
+        // Aide à la rédaction pure : reformulation, jamais une analyse de fraude (c'était le bug).
+        if ($quotaService->quotaAtteint($request->user())) {
+            return back()->withErrors([
+                'contenu' => "Quota quotidien d'analyses IA atteint. Réessayez demain, ou décrivez le signalement manuellement.",
+            ]);
+        }
 
-        // Renvoie vers le formulaire de création avec la description pré-remplie,
-        // modifiable par l'utilisateur avant validation finale (jamais envoyée telle quelle)
-        return back()->withInput([
-            'description' => $suggestion,
-            'analyse_id' => $analyse->id,
-        ])->with('status', $appelFacture
-            ? 'Suggestion générée (1 appel IA consommé).'
-            : 'Suggestion générée à partir d\'une analyse existante — aucun appel IA supplémentaire.');
+        $descriptionAmelioree = $service->ameliorerRedaction($data['type'], $data['contenu']);
+
+        // Trace conservée pour le comptage du quota (toujours un appel IA facturé),
+        // sans score de fiabilité : ce n'est pas une analyse de fraude.
+        $analyse = $request->user()->analyses()->create([
+            'date_analyse' => now(),
+            'score_fiabilite' => null,
+            'conclusion' => $descriptionAmelioree,
+        ]);
+
+        return back()->withInput(['description' => $descriptionAmelioree, 'analyse_id' => $analyse->id])
+            ->with('status', 'Description reformulée par l\'IA (1 appel consommé) — relisez-la avant de valider.');
     }
 }
