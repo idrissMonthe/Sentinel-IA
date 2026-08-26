@@ -24,7 +24,6 @@
 
 /*@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap');*/
 
-/* --- Reset & Baseline --- */
 * {
     margin: 0;
     padding: 0;
@@ -89,19 +88,6 @@ h1, h2, h3, h4,
     padding: 0 20px;
     position: relative;
 }
-.logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 15px;
-}
-.logo img {
-    width: 50px;
-    border-radius: 50%;
-    object-position: center;
-    border: 2px solid var(--border-glow);
-}
-
 .brand-logo {
     margin-right: auto;
     font-size: 1.6rem;
@@ -135,11 +121,29 @@ h1, h2, h3, h4,
     white-space: nowrap;
     padding: 5px 8px;
     font-weight: 500;
+    position: relative;
+    padding-bottom: 6px;
     transition: color 0.2s ease;
 }
-
+.nav-link::after {
+    content: '';
+    position:absolute;
+    bottom: 0;
+    left: 8px;
+    right: 8px;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.3s ease-out;
+    height: 4px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: var(--green-ai);
+}
 .nav-link:hover {
     color: var(--green-ai);
+}
+.nav-link:hover:after {
+    transform: scaleX(1);
 }
 
 .nav-link.mod-link { color: var(--warning); }

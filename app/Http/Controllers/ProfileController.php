@@ -38,14 +38,28 @@ class ProfileController extends Controller
     }
 
     // ConsulterHistorique()
-    public function historique(Request $request)
-    {
-        $signalements = $request->user()
-            ->signalements()
-            ->with('entiteSuspecte')
-            ->latest()
-            ->paginate(15);
+public function historique(Request $request)
+{
+    $signalements = $request->user()->signalements()->get()->map(fn ($s) => [
+        'type' => 'signalement',
+        'date' => $s->created_at,
+        'label' => 'Signalement : '.($s->entiteSuspecte?->valeur ?? '—'),
+        'statut' => $s->statut->label(),
+        'lien' => route('signalements.show', $s),
+    ]);
 
-        return view('profile.historique', compact('signalements'));
-    }
+    $analyses = $request->user()->analyses()->get()->map(fn ($a) => [
+        'type' => 'analyse',
+        'date' => $a->created_at,
+        'label' => $a->score_fiabilite !== null
+            ? "Analyse IA (score {$a->score_fiabilite}%)"
+            : 'Reformulation assistée par IA',
+        'statut' => null,
+        'lien' => route('analyses.show', $a),
+    ]);
+
+    $activites = $signalements->concat($analyses)->sortByDesc('date')->values();
+
+    return view('profile.historique', compact('activites'));
+}
 }

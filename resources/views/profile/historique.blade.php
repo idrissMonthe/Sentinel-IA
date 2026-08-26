@@ -8,29 +8,29 @@
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; border-bottom: 1px solid var(--border-glow); padding-bottom: 20px;">
         <div>
             <h1 class="page-title" style="color: var(--blue-glow); margin-bottom: 5px;">Mon Espace</h1>
-            <p class="text-secondary">Gérez vos informations et suivez l'impact de vos signalements.</p>
+            <p class="text-secondary">Gérez vos informations et suivez l'impact de vos signalements et analyses.</p>
         </div>
         <a href="{{ route('signalements.create') }}" class="btn btn-signal" style="box-shadow: 0 0 15px var(--danger)40;">+ Nouveau Signalement</a>
     </div>
 
     <div style="display: flex; gap: 30px;">
-
-<aside style="width: 250px; flex-shrink: 0;">
-    <div class="card" style="padding: 20px;">
-        <nav style="display: flex; flex-direction: column; gap: 10px;">
-            <a href="{{ route('profile.edit') }}" style="color: var(--text-secondary); text-decoration: none; padding: 10px; border-radius: 8px; transition: 0.3s;">
-                👤 Mes informations & Sécurité
-            </a>
-            <a href="{{ route('profile.historique') }}" style="background: rgba(0, 212, 255, 0.1); color: var(--blue-glow); text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; border-left: 3px solid var(--blue-glow);">
-                📜 Historique des signalements
-            </a>
-        </nav>
-    </div>
-</aside>
+        <!-- Barre latérale -->
+        <aside style="width: 250px; flex-shrink: 0;">
+            <div class="card" style="padding: 20px;">
+                <nav style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="{{ route('profile.edit') }}" style="color: var(--text-secondary); text-decoration: none; padding: 10px; border-radius: 8px; transition: 0.3s;">
+                        Mes informations & Sécurité
+                    </a>
+                    <a href="{{ route('profile.historique') }}" style="background: rgba(0, 212, 255, 0.1); color: var(--blue-glow); text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; border-left: 3px solid var(--blue-glow);">
+                        Historique des activités
+                    </a>
+                </nav>
+            </div>
+        </aside>
 
         <!-- Contenu principal : Historique -->
         <div style="flex: 1;">
-            <!-- Filtres rapides -->
+            <!-- Filtres rapides (S'appliquent principalement aux signalements) -->
             <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <a href="{{ route('profile.historique') }}" class="badge {{ request('statut') ? 'badge-outline' : 'badge-active' }}">Tous</a>
                 <a href="{{ route('profile.historique', ['statut' => 'en_attente']) }}" class="badge {{ request('statut') == 'en_attente' ? 'badge-warning' : 'badge-outline' }}">En attente</a>
@@ -38,50 +38,57 @@
                 <a href="{{ route('profile.historique', ['statut' => 'rejete']) }}" class="badge {{ request('statut') == 'rejete' ? 'badge-danger' : 'badge-outline' }}">Rejetés</a>
             </div>
 
-            <!-- Liste des signalements -->
+            <!-- Liste des activités (Signalements + Analyses) -->
             <div style="display: flex; flex-direction: column; gap: 15px;">
-                @forelse ($signalements as $signalement)
+                @forelse ($activites as $activite)
                     <div class="card fade-in-element" style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
                         
                         <div style="flex: 1;">
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                
+                                <!-- Badge de Type (Signalement ou Analyse) -->
+                                @if($activite['type'] === 'signalement')
+                                    <span style="background: rgba(0, 212, 255, 0.1); color: var(--blue-glow); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; border: 1px solid var(--blue-glow); text-transform: uppercase; font-weight: bold;">
+                                        Signalement
+                                    </span>
+                                @else
+                                    <span style="background: rgba(177, 156, 217, 0.1); color: #b19cd9; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; border: 1px solid #b19cd9; text-transform: uppercase; font-weight: bold;">
+                                        Analyse IA
+                                    </span>
+                                @endif
+
+                                <!-- Label de l'activité -->
                                 <span style="font-weight: bold; font-size: 1.1rem; color: var(--text-primary);">
-                                    {{ ucfirst($signalement->type_entite) }} : {{ $signalement->valeur_entite }}
+                                    {{ $activite['label'] }}
                                 </span>
                                 
-                                @if($signalement->statut === 'en_attente')
-                                    <span style="background: rgba(255, 193, 7, 0.1); color: var(--warning); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--warning);">En attente</span>
-                                @elseif($signalement->statut === 'valide')
-                                    <span style="background: rgba(40, 167, 69, 0.1); color: var(--success); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--success);">Validé</span>
-                                @else
-                                    <span style="background: rgba(220, 53, 69, 0.1); color: var(--danger); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--danger);">Rejeté</span>
+                                <!-- Badge de Statut (Uniquement si existant) -->
+                                @if($activite['statut'])
+                                    @if($activite['statut'] === 'En attente')
+                                        <span style="background: rgba(255, 193, 7, 0.1); color: var(--warning); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--warning);">En attente</span>
+                                    @elseif($activite['statut'] === 'Validé')
+                                        <span style="background: rgba(40, 167, 69, 0.1); color: var(--success); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--success);">Validé</span>
+                                    @else
+                                        <span style="background: rgba(220, 53, 69, 0.1); color: var(--danger); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--danger);">Rejeté</span>
+                                    @endif
                                 @endif
                             </div>
                             
-                            <p class="text-secondary" style="font-size: 0.9rem; margin-bottom: 5px;">
-                                Soumis le {{ $signalement->created_at->format('d/m/Y à H:i') }}
-                            </p>
-                            <p style="color: var(--text-secondary); font-size: 0.95rem;">
-                                {{ Str::limit($signalement->description, 80) }}
+                            <p class="text-secondary" style="font-size: 0.9rem; margin-bottom: 0;">
+                                Enregistré le {{ $activite['date']->format('d/m/Y à H:i') }}
                             </p>
                         </div>
 
                         <div style="margin-left: 20px; text-align: right;">
-                            <a href="{{ route('signalements.show', $signalement->id) }}" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Détails</a>
+                            <a href="{{ $activite['lien'] }}" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Détails</a>
                         </div>
                     </div>
                 @empty
                     <div class="card text-center" style="padding: 40px; border: 1px dashed var(--border-glow); background: transparent;">
-                        <div style="font-size: 2.5rem; margin-bottom: 15px;">🕵️‍♂️</div>
-                        <p style="font-size: 1.1rem; color: var(--text-secondary);">Votre historique est vierge.</p>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;">Aidez la communauté en signalant votre première menace.</p>
+                        <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 5px;">Votre historique est vierge.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0;">Analysez ou signalez votre première menace pour aider la communauté.</p>
                     </div>
                 @endforelse
-            </div>
-
-            <!-- Pagination -->
-            <div style="margin-top: 30px; display: flex; justify-content: center;">
-                {{ $signalements->links() }}
             </div>
         </div>
     </div>

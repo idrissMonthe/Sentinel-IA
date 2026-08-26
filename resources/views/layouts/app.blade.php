@@ -16,7 +16,6 @@
     <!-- ================= NAVIGATION ================= -->
     <header class="navbar">
         <div class="container nav-container">
-            <div class="logo"><img src="{{ asset('logo.jpg') }}" alt="Logo Sentinel IA"></div>
             <a href="{{ route('accueil') }}" class="brand-logo">SENTINEL<span class="ia-text">IA</span></a>
 
             <!-- Bouton Burger (CSS/JS Vanilla) -->

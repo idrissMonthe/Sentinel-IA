@@ -29,6 +29,7 @@
                             <form action="{{ route('moderation.valider', $signalement) }}" method="POST">
                                 @csrf @method('PATCH')
                                 <button type="submit" class="btn" style="background: var(--success); color: #000; padding: 6px 12px; min-height: auto;">Valider</button>
+                                <a href="{{ route('signalements.show', $signalement) }}" class="btn btn-secondary">Voir le détail</a>
                             </form>
                             <form action="{{ route('moderation.rejeter', $signalement) }}" method="POST">
                                 @csrf @method('PATCH')

@@ -13,6 +13,10 @@ return new class extends Migration
             $table->timestamp('date_derniere_mise_a_jour')->useCurrent();
             $table->unsignedInteger('total_signalement_actifs')->default(0);
             $table->unsignedInteger('total_entites_bannies')->default(0);
+            $table->integer('analyses_effectuees')->default(0);
+            $table->integer('utilisateurs_proteges')->default(0);
+            $table->json('menaces_frequentes')->nullable();
+            $table->json('zones_touchees')->nullable();
         });
     }
 
