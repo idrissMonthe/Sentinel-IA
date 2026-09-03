@@ -65,21 +65,35 @@ private function construirePartsImage(string $cheminFichier): array
     ];
 }
 
-    private function construirePrompt(string $type, string $contenu): string
-    {
-        return <<<PROMPT
+ private function construirePrompt(string $type, string $contenu): string
+{
+    return <<<PROMPT
 Tu es un module de détection d'arnaques numériques pour le Cameroun (fraude Mobile Money,
 fausses offres d'emploi, loteries fictives, arnaques sentimentales).
+
+RÈGLE IMPORTANTE : le simple fait qu'un site, un numéro ou un expéditeur te soit inconnu
+N'EST PAS en soi une preuve de fraude. Un site récent, peu connu, ou une petite entreprise
+légitime peuvent parfaitement être inconnus de toi sans être frauduleux. Base ton score
+UNIQUEMENT sur des indices concrets présents dans le contenu fourni (demande d'informations
+sensibles ou de paiement, urgence artificielle, promesses irréalistes, incohérences),
+jamais sur le simple manque de reconnaissance.
+
+Si les informations fournies sont insuffisantes pour te prononcer avec confiance (par exemple :
+contenu d'une page web non récupérable), attribue un score modéré (entre 40 et 55) plutôt qu'un
+score élevé, et indique clairement dans ta conclusion que l'analyse est incomplète et qu'une
+vérification manuelle est recommandée. Ne classe jamais un contenu insuffisamment informatif
+comme "très probablement une arnaque" par défaut.
+
 Analyse le contenu suivant, de type "{$type}", et réponds UNIQUEMENT avec un objet JSON strict,
 sans texte ni balise markdown autour, au format exact :
-{"score_fiabilite": <entier entre 0 et 100, 100 = très probablement une arnaque>, "conclusion": "<3 phrases maximum, en français, expliquant le score et en donnant des mesures à suivre pour ne pas se faire arnaquer en rapport avec le type de l'arnaque>"}
+{"score_fiabilite": <entier entre 0 et 100, 100 = très probablement une arnaque>, "conclusion": "<3 phrases maximum, en français, expliquant le score et donnant des mesures à suivre pour ne pas se faire arnaquer en rapport avec le type de contenu analysé>"}
 
 Contenu à analyser :
 """
 {$contenu}
 """
 PROMPT;
-    }
+}
     public function ameliorerRedaction(string $type, string $contenuBrut): string
 {
     try {

@@ -34,40 +34,86 @@
         </div>
     </div>
 
-    <!-- Section Preuves -->
-    <h2 style="margin-bottom: 20px;">Preuves ({{ $signalement->preuves->count() }})</h2>
-    
-    <div class="features-grid" style="margin-bottom: 30px;">
-        @foreach($signalement->preuves as $preuve)
-            <div class="card" style="padding: 15px;">
-                <p style="font-weight: bold; color: var(--blue-glow);">{{ ucfirst($preuve->type) }}</p>
-                <p class="text-secondary" style="font-size: 0.85rem;">Document chiffré stocké sur les serveurs.</p>
-                <!-- Futur bouton de téléchargement -->
-            </div>
-        @endforeach
-    </div>
+    @if(Auth::user()->estModerateur())
+        <!-- Actions du Modérateur : Approuver / Rejeter (selon le diagramme de classe : VerifierSignalement / SupprimerFauxSignalement) -->
+        <div class="card border-glow" style="border-color: var(--border-glow); padding: 25px;">
+            <h2 style="font-size: 1.3rem; margin-bottom: 10px; color: var(--text-primary);">Décision de modération</h2>
+            
+            @if($signalement->statut === \App\Enums\StatutSignalement::EN_ATTENTE)
+                <p class="text-secondary" style="margin-bottom: 20px; font-size: 0.95rem;">
+                    Examinez les faits signalés ci-dessus pour approuver ou rejeter ce signalement dans la base nationale :
+                </p>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                    <form action="{{ route('moderation.valider', $signalement) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="btn btn-primary" style="background: var(--success); color: #000; border-color: var(--success);">
+                            Approuver le signalement
+                        </button>
+                    </form>
 
-    <!-- Formulaire d'ajout de preuve -->
-    <div class="card border-glow" style="border-color: var(--blue-shield);">
-        <h3>Ajouter une preuve</h3>
-        <form action="{{ route('signalements.preuves.store', $signalement) }}" method="POST" enctype="multipart/form-data" style="margin-top: 15px;">
-            @csrf
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: end;">
-                <div class="form-group" style="margin: 0;">
-                    <label>Type de preuve</label>
-                    <select name="type" required class="form-control">
-                        <option value="image">Image (Capture)</option>
-                        <option value="document">Document (PDF)</option>
-                        <option value="lien">Lien web (TXT)</option>
-                    </select>
+                    <form action="{{ route('moderation.rejeter', $signalement) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="btn btn-signal">
+                            Rejeter le signalement
+                        </button>
+                    </form>
+
+                    <a href="{{ route('moderation.index') }}" class="btn btn-secondary">
+                        Retour à la file d'attente
+                    </a>
                 </div>
-                <div class="form-group" style="margin: 0;">
-                    <label>Fichier</label>
-                    <input type="file" name="fichier" required class="form-control" style="padding: 9px;">
+            @else
+                <p class="text-secondary" style="margin-bottom: 15px; font-size: 0.95rem;">
+                    Ce dossier a déjà été traité avec le statut <strong style="color: {{ $signalement->statut->color() }};">{{ $signalement->statut->label() }}</strong>.
+                </p>
+                <a href="{{ route('moderation.index') }}" class="btn btn-secondary">
+                    Retour à la file d'attente
+                </a>
+            @endif
+        </div>
+    @else
+        <!-- Section Preuves : Réservée au citoyen déclarant (cas d'utilisation Signaler une arnaque <<include>> Fournir preuve) -->
+        <h2 style="margin-bottom: 20px;">Preuves ({{ $signalement->preuves->count() }})</h2>
+        
+        <div class="features-grid" style="margin-bottom: 30px;">
+            @forelse($signalement->preuves as $preuve)
+                <div class="card" style="padding: 15px;">
+                    <p style="font-weight: bold; color: var(--blue-glow);">{{ ucfirst($preuve->type) }}</p>
+                    <p class="text-secondary" style="font-size: 0.85rem;">Document chiffré stocké sur les serveurs.</p>
                 </div>
+            @empty
+                <div class="card" style="grid-column: 1 / -1; padding: 20px; text-align: center;">
+                    <p class="text-secondary" style="margin: 0;">Aucune preuve jointe à ce signalement.</p>
+                </div>
+            @endforelse
+        </div>
+
+        @if($signalement->statut === \App\Enums\StatutSignalement::EN_ATTENTE && Auth::id() === $signalement->user_id)
+            <!-- Formulaire d'ajout de preuve (uniquement pour l'auteur du signalement tant qu'il est en attente) -->
+            <div class="card border-glow" style="border-color: var(--blue-shield);">
+                <h3 style="margin-bottom: 10px;">Ajouter une preuve</h3>
+                <form action="{{ route('signalements.preuves.store', $signalement) }}" method="POST" enctype="multipart/form-data" style="margin-top: 15px;">
+                    @csrf
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; align-items: end;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Type de preuve</label>
+                            <select name="type" required class="form-control">
+                                <option value="image">Image (Capture)</option>
+                                <option value="document">Document (PDF)</option>
+                                <option value="lien">Lien web (TXT)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Fichier</label>
+                            <input type="file" name="fichier" required class="form-control" style="padding: 9px;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 15px;">Envoyer la preuve</button>
+                </form>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top: 15px;">Envoyer la preuve</button>
-        </form>
-    </div>
+        @endif
+    @endif
 </div>
 @endsection

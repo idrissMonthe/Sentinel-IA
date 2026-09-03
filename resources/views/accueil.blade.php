@@ -48,5 +48,8 @@
         <p>Consultez les mises en garde officielles publiées par nos modérateurs sur les nouvelles vagues de fraudes (Mobile Money, fausses offres...).</p>
     </div>
 </div>
+<!--<footer>
+    <p>&copy; 2026 Sentinel IA.  Tous droits réservés.</p>
+</footer>-->
 
 @endsection
