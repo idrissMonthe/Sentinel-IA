@@ -17,7 +17,7 @@ class StorePreuveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'fichier' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'fichier' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf,txt', 'max:5120'],
             'type' => ['required', 'in:image,document,lien'],
         ];
     }

@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Analyse;
 use App\Http\Requests\StoreAnalyseRequest;
 use App\Services\Analyse\AnalyseIAService;
+use App\Services\Analyse\ContenuLienFetcher;
 use App\Services\Analyse\QuotaAnalyseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class AnalyseController extends Controller
 {
-    public function __construct(private AnalyseIAService $analyseIAService, private QuotaAnalyseService $quotaService,)
+    public function __construct(
+        private AnalyseIAService $analyseIAService,
+        private QuotaAnalyseService $quotaService,
+        private ContenuLienFetcher $contenuLienFetcher,
+    )
     {
        
     }
@@ -39,10 +44,18 @@ class AnalyseController extends Controller
         // avant d'appeler l'IA (chaîne include Extraire le texte -> Envoyer à l'IA)
         $contenu = $data['contenu'] ?? $request->file('fichier')->path();
 
+        if ($data['type'] === 'lien') {
+            $contenuRecupere = $this->contenuLienFetcher->recuperer($contenu);
+            if ($contenuRecupere !== null) {
+                $contenu = $contenuRecupere;
+            }
+        }
+
         [$score, $conclusion] = $this->analyseIAService->analyser($data['type'], $contenu);
 
         // mettreAJourScore() est appliqué ici, au retour de l'appel IA
         $analyse = $request->user()->analyses()->create([
+            'type' => $data['type'],
             'date_analyse' => now(),
             'score_fiabilite' => $score,
             'conclusion' => $conclusion,
@@ -67,11 +80,4 @@ class AnalyseController extends Controller
         return view('analyses.show', compact('analyse', 'conseil'));
     }
 
-    // genererRapport() — <<extend>> de Consulter l'historique / Suivre un signalement
-    public function genererRapport(Analyse $analyse)
-    {
-        $this->authorize('view', $analyse);
-
-        return view('analyses.rapport', compact('analyse'));
-    }
 }

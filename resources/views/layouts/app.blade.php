@@ -95,20 +95,5 @@
         @yield('content')
     </main>
 
-    <!-- ================= SCRIPTS ================= -->
-    <script>
-        // Logique Vanilla JS pour le menu Burger
-        document.addEventListener('DOMContentLoaded', () => {
-            const burgerToggle = document.getElementById('burgerToggle');
-            const navMenu = document.getElementById('navMenu');
-
-            if (burgerToggle && navMenu) {
-                burgerToggle.addEventListener('click', () => {
-                    burgerToggle.classList.toggle('active');
-                    navMenu.classList.toggle('active');
-                });
-            }
-        });
-    </script>
 </body>
 </html>

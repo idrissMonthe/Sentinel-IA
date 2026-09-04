@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alerte;
+use App\Http\Requests\StoreAlerteRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -24,15 +25,9 @@ class AlerteController extends Controller
     }
 
     // Publier une alerte — scénario nominal + alternative 5.1
-    public function store(Request $request): RedirectResponse
+    public function store(StoreAlerteRequest $request): RedirectResponse
     {
-        abort_unless($request->user()->estModerateur(), 403);
-
-        $data = $request->validate([
-            'titre' => ['required', 'string', 'max:255'],
-            'contenu' => ['required', 'string'],
-            'action' => ['required', 'in:publier,brouillon'],
-        ]);
+        $data = $request->validated();
 
         $alerte = $request->user()->alertesPubliees()->create([
             'titre' => $data['titre'],

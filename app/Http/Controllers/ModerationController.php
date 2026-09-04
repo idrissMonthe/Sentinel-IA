@@ -58,7 +58,12 @@ class ModerationController extends Controller
     {
         $this->authorize('moderer',Signalement::class);
 
-        $entites = \App\Models\EntiteSuspecte::withCount([
+        $entites = \App\Models\EntiteSuspecte::with([
+            'signalements' => fn ($q) => $q
+                ->where('statut', StatutSignalement::EN_ATTENTE)
+                ->with('utilisateur')
+                ->oldest(),
+        ])->withCount([
             'signalements as signalements_en_attente_count' => fn ($q) => $q->where('statut', StatutSignalement::EN_ATTENTE),
         ])
             ->having('signalements_en_attente_count', '>', 1)

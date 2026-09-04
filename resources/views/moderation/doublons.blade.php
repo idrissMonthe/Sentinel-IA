@@ -14,30 +14,34 @@
     </p>
 
     <div style="display: flex; flex-direction: column; gap: 30px;">
-        @forelse ($entitesDoublons ?? [] as $entite)
+        @forelse ($entites as $entite)
             <div class="card" style="border-left: 4px solid var(--warning);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-glow); padding-bottom: 15px;">
                     <div>
                         <h2 style="margin: 0; font-size: 1.3rem;">{{ ucfirst($entite->type) }} : <span style="color: var(--warning);">{{ $entite->valeur }}</span></h2>
-                        <span class="text-secondary" style="font-size: 0.9rem;">{{ $entite->signalements_count }} signalements en attente</span>
+                        <span class="text-secondary" style="font-size: 0.9rem;">{{ $entite->signalements_en_attente_count }} signalements en attente</span>
                     </div>
                     
-                    <!-- Bouton pour fusionner d'un coup (nécessite une route dédiée dans ton Controller) -->
-                    <form action="{{ route('moderation.valider', $entite->id) }}" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" class="btn" style="background: var(--warning); color: #000; padding: 8px 16px;">Fusionner & Valider tout</button>
-                    </form>
                 </div>
 
                 <!-- Liste des signalements sous ce doublon -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
-                    @foreach($entite->signalementsNonTraites as $signalement)
+                    @foreach($entite->signalements as $signalement)
                         <div style="background: var(--bg-surface); padding: 15px; border-radius: 8px;">
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
-                                Par {{ $signalement->user->prenom }} le {{ $signalement->created_at->format('d/m/Y') }}
+                                Par {{ $signalement->utilisateur?->prenom }} le {{ $signalement->created_at->format('d/m/Y') }}
                             </p>
                             <p style="font-size: 0.95rem; line-height: 1.4;">"{{ Str::limit($signalement->description, 100) }}"</p>
+                        </div>
+                        <div style="margin-top: 10px; display: flex; gap: 8px;">
+                            <form action="{{ route('moderation.valider', $signalement) }}" method="POST">
+                                @csrf @method('PATCH')
+                                <button type="submit" class="btn" style="background: var(--success); color: #000; padding: 6px 12px;">Valider</button>
+                            </form>
+                            <form action="{{ route('moderation.rejeter', $signalement) }}" method="POST">
+                                @csrf @method('PATCH')
+                                <button type="submit" class="btn btn-signal" style="padding: 6px 12px;">Rejeter</button>
+                            </form>
                         </div>
                     @endforeach
                 </div>

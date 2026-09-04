@@ -45,9 +45,6 @@
                 </a>
 
                 <!-- Lien pour générer la vue imprimable -->
-                <a href="{{ route('analyses.rapport', $analyse) }}" class="btn btn-secondary btn-block" style="margin-top: 15px;">
-                    📄 Générer un rapport
-                </a>
             </div>
         </div>
     </div>

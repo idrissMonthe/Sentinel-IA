@@ -86,7 +86,6 @@ Route::middleware('auth')->prefix('analyses')->name('analyses.')->group(function
     Route::get('/creer', [AnalyseController::class, 'create'])->name('create');
     Route::post('/', [AnalyseController::class, 'store'])->name('store');
     Route::get('/{analyse}', [AnalyseController::class, 'show'])->name('show');          // protégé par AnalysePolicy::view
-    Route::get('/{analyse}/rapport', [AnalyseController::class, 'genererRapport'])->name('rapport'); // <<extend>>
 });
 
 /*

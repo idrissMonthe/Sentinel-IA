@@ -40,7 +40,11 @@ class ProfileController extends Controller
     // ConsulterHistorique()
 public function historique(Request $request)
 {
-    $signalements = $request->user()->signalements()->get()->map(fn ($s) => [
+    $statut = $request->input('statut');
+    $signalements = $request->user()->signalements()
+        ->when($statut, fn ($query) => $query->where('statut', $statut))
+        ->with('entiteSuspecte')
+        ->get()->map(fn ($s) => [
         'type' => 'signalement',
         'date' => $s->created_at,
         'label' => 'Signalement : '.($s->entiteSuspecte?->valeur ?? '—'),

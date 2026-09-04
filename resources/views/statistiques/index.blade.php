@@ -13,15 +13,15 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
         <div class="card text-center" style="border-top: 4px solid var(--blue-glow);">
             <h3 class="text-secondary" style="font-size: 1.1rem;">Analyses IA effectuées</h3>
-            <div style="font-size: 3rem; font-weight: bold; color: var(--text-primary); margin: 10px 0;">{{ $totalAnalyses ?? '0' }}</div>
+            <div style="font-size: 3rem; font-weight: bold; color: var(--text-primary); margin: 10px 0;">{{ $statistiques->analyses_effectuees }}</div>
         </div>
         <div class="card text-center" style="border-top: 4px solid var(--success);">
             <h3 class="text-secondary" style="font-size: 1.1rem;">Arnaques confirmées</h3>
-            <div style="font-size: 3rem; font-weight: bold; color: var(--success); margin: 10px 0;">{{ $totalSignalementsValides ?? '0' }}</div>
+            <div style="font-size: 3rem; font-weight: bold; color: var(--success); margin: 10px 0;">{{ $statistiques->total_signalement_actifs }}</div>
         </div>
         <div class="card text-center" style="border-top: 4px solid var(--warning);">
             <h3 class="text-secondary" style="font-size: 1.1rem;">Utilisateurs protégés</h3>
-            <div style="font-size: 3rem; font-weight: bold; color: var(--warning); margin: 10px 0;">{{ $totalUtilisateurs ?? '0' }}</div>
+            <div style="font-size: 3rem; font-weight: bold; color: var(--warning); margin: 10px 0;">{{ $statistiques->utilisateurs_proteges }}</div>
         </div>
     </div>
 
@@ -31,10 +31,10 @@
         <div class="card">
             <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-glow); padding-bottom: 10px;">Types de menaces les plus signalés</h3>
             <ul style="list-style: none; padding: 0; margin: 0;">
-                @forelse($topTypes ?? [] as $type => $count)
+                @forelse($statistiques->menaces_frequentes ?? [] as $menace)
                     <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-weight: bold; color: var(--text-secondary);">{{ ucfirst($type) }}</span>
-                        <span style="color: var(--danger); font-weight: bold;">{{ $count }} signalements</span>
+                        <span style="font-weight: bold; color: var(--text-secondary);">{{ $menace['label'] }}</span>
+                        <span style="color: var(--danger); font-weight: bold;">{{ $menace['total'] }} entités</span>
                     </li>
                 @empty
                     <li class="text-secondary">Données insuffisantes pour le moment.</li>
@@ -46,10 +46,10 @@
         <div class="card">
             <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-glow); padding-bottom: 10px;">Zones les plus touchées</h3>
             <ul style="list-style: none; padding: 0; margin: 0;">
-                @forelse($topVilles ?? [] as $ville => $count)
+                @forelse($statistiques->zones_touchees ?? [] as $zone)
                     <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-weight: bold; color: var(--text-secondary);">{{ $ville ?: 'Non renseigné' }}</span>
-                        <span style="color: var(--warning); font-weight: bold;">{{ $count }} cas</span>
+                        <span style="font-weight: bold; color: var(--text-secondary);">{{ $zone['label'] ?: 'Non renseigné' }}</span>
+                        <span style="color: var(--warning); font-weight: bold;">{{ $zone['total'] }} cas</span>
                     </li>
                 @empty
                     <li class="text-secondary">Données insuffisantes pour le moment.</li>
