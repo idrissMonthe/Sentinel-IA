@@ -34,9 +34,13 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    'gemini' => [
-    'key' => env('GEMINI_API_KEY'),
-    'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
-],
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-5-mini'),
+        'timeout' => (int) env('OPENAI_TIMEOUT', 15),
+        // Deux tentatives au total : une relance limitée évite de multiplier les coûts.
+        'retry_attempts' => (int) env('OPENAI_RETRY_ATTEMPTS', 2),
+        'retry_delay_ms' => (int) env('OPENAI_RETRY_DELAY_MS', 250),
+    ],
 
 ];

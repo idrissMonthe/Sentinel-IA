@@ -101,8 +101,9 @@ class RulesBasedAnalyseIAService implements AnalyseIAService
         return [$score, $this->construireConclusion($score, $categoriesDetectees)];
     }
 
-    private function analyserStructureLien(string $url): int
+    private function analyserStructureLien(string $contenu): int
     {
+        $url = $this->extraireUrl($contenu);
         $bonus = 0;
 
         foreach (self::TLD_SUSPECTS as $motif) {
@@ -126,6 +127,15 @@ class RulesBasedAnalyseIAService implements AnalyseIAService
         }
 
         return $bonus;
+    }
+
+    private function extraireUrl(string $contenu): string
+    {
+        if (preg_match('/https?:\/\/[^\s<>"\']+/i', $contenu, $correspondances)) {
+            return $correspondances[0];
+        }
+
+        return $contenu;
     }
 
     private function construireConclusion(int $score, array $categoriesDetectees): string
@@ -165,5 +175,10 @@ class RulesBasedAnalyseIAService implements AnalyseIAService
         }
 
         return $texte."\n\n(Mode dégradé : reformulation automatique indisponible pour le moment, texte affiché après mise en forme minimale seulement.)";
+    }
+
+    public function appelDistantEffectue(): bool
+    {
+        return false;
     }
 }

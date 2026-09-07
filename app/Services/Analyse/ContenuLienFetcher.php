@@ -17,14 +17,14 @@ class ContenuLienFetcher
         }
 
         try {
-            $reponse = Http::withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (compatible; SentinelIABot/1.0)',
-                ])
-                ->timeout(self::TIMEOUT_SECONDES)
-                ->withOptions(['allow_redirects' => ['max' => 3]])
-                ->get($url);
+            $reponse = $this->suivreRedirectionsSures($url);
 
-            if ($reponse->failed()) {
+            if ($reponse === null || $reponse->failed()) {
+                return null;
+            }
+
+            $tailleAnnonce = (int) $reponse->header('Content-Length', 0);
+            if ($tailleAnnonce > self::TAILLE_MAX_OCTETS) {
                 return null;
             }
 
@@ -34,6 +34,63 @@ class ContenuLienFetcher
 
             return null;
         }
+    }
+
+    private function suivreRedirectionsSures(string $url): ?\Illuminate\Http\Client\Response
+    {
+        $urlCourante = $url;
+
+        for ($redirections = 0; $redirections <= 3; $redirections++) {
+            // Chaque cible est contrôlée : une redirection ne doit pas contourner la protection SSRF.
+            if (! $this->urlEstSure($urlCourante)) {
+                return null;
+            }
+
+            $reponse = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (compatible; SentinelIABot/1.0)',
+                ])
+                ->timeout(self::TIMEOUT_SECONDES)
+                ->withoutRedirecting()
+                ->get($urlCourante);
+
+            if (! $reponse->redirect()) {
+                return $reponse;
+            }
+
+            $destination = $reponse->header('Location');
+            if (blank($destination) || $redirections === 3) {
+                return null;
+            }
+
+            $urlCourante = $this->resoudreRedirection($urlCourante, $destination);
+        }
+
+        return null;
+    }
+
+    private function resoudreRedirection(string $urlSource, string $destination): string
+    {
+        if (parse_url($destination, PHP_URL_SCHEME) !== null) {
+            return $destination;
+        }
+
+        $source = parse_url($urlSource);
+        $autorite = ($source['scheme'] ?? 'https').'://'.($source['host'] ?? '');
+        if (isset($source['port'])) {
+            $autorite .= ':'.$source['port'];
+        }
+
+        if (str_starts_with($destination, '//')) {
+            return ($source['scheme'] ?? 'https').':'.$destination;
+        }
+
+        if (str_starts_with($destination, '/')) {
+            return $autorite.$destination;
+        }
+
+        $repertoire = rtrim(dirname($source['path'] ?? '/'), '/');
+
+        return $autorite.($repertoire === '' ? '/' : $repertoire.'/').$destination;
     }
 
     private function urlEstSure(string $url): bool

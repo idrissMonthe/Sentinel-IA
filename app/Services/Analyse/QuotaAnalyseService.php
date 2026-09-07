@@ -9,7 +9,10 @@ class QuotaAnalyseService
     public function quotaAtteint(User $user): bool
     {
         $quota = config('sentinel_ia.quota_analyses_jour');
-        $utiliseAujourdhui = $user->analyses()->whereDate('created_at', today())->count();
+        $utiliseAujourdhui = $user->analyses()
+            ->where('api_appel_effectue', true)
+            ->whereDate('created_at', today())
+            ->count();
 
         return $utiliseAujourdhui >= $quota;
     }

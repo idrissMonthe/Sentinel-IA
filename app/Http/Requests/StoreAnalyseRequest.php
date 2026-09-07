@@ -15,8 +15,9 @@ class StoreAnalyseRequest extends FormRequest
     {
         return [
             'type' => ['required', 'in:texte,lien,numero,email,image'],
-            'contenu' => ['required_without:fichier', 'nullable', 'string'],
-            'fichier' => ['required_without:contenu', 'nullable', 'file', 'image', 'max:5120'],
+            // Une image doit toujours provenir d'un upload validé, jamais d'un chemin fourni par le client.
+            'contenu' => ['required_unless:type,image', 'prohibited_if:type,image', 'nullable', 'string', 'max:12000'],
+            'fichier' => ['required_if:type,image', 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
         ];
     }
 }

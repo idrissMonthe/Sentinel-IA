@@ -101,9 +101,11 @@ class SignalementController extends Controller
         // Trace conservée pour le comptage du quota (toujours un appel IA facturé),
         // sans score de fiabilité : ce n'est pas une analyse de fraude.
         $analyse = $request->user()->analyses()->create([
+            'type' => $data['type'],
             'date_analyse' => now(),
             'score_fiabilite' => null,
             'conclusion' => $descriptionAmelioree,
+            'api_appel_effectue' => $service->appelDistantEffectue(),
         ]);
 
         return back()->withInput(['description' => $descriptionAmelioree, 'analyse_id' => $analyse->id])

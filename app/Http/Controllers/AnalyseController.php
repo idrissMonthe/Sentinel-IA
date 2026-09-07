@@ -29,11 +29,7 @@ class AnalyseController extends Controller
     // lancerAnalyse() — nécessite un compte (consomme des crédits IA, cf. Module Détection/Analyse)
     public function store(StoreAnalyseRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'type' => ['required', 'in:texte,lien,numero,email,image'],
-            'contenu' => ['required_without:fichier', 'nullable', 'string'],
-            'fichier' => ['required_without:contenu', 'nullable', 'file', 'image', 'max:5120'],
-        ]);
+        $data = $request->validated();
          if ($this->quotaService->quotaAtteint($request->user())) {
         return back()->withErrors([
             'type' => "Quota quotidien d'analyses IA atteint. Réessayez demain.",
@@ -42,12 +38,15 @@ class AnalyseController extends Controller
 
         // Si image : le service se charge en interne du passage par le Module OCR
         // avant d'appeler l'IA (chaîne include Extraire le texte -> Envoyer à l'IA)
-        $contenu = $data['contenu'] ?? $request->file('fichier')->path();
+        $contenu = $data['type'] === 'image'
+            ? $request->file('fichier')->path()
+            : $data['contenu'];
 
         if ($data['type'] === 'lien') {
             $contenuRecupere = $this->contenuLienFetcher->recuperer($contenu);
             if ($contenuRecupere !== null) {
-                $contenu = $contenuRecupere;
+                // L'URL initiale reste utile à l'IA et au fallback pour détecter les signaux de domaine.
+                $contenu = "URL soumise : {$contenu}\n\n{$contenuRecupere}";
             }
         }
 
@@ -59,6 +58,7 @@ class AnalyseController extends Controller
             'date_analyse' => now(),
             'score_fiabilite' => $score,
             'conclusion' => $conclusion,
+            'api_appel_effectue' => $this->analyseIAService->appelDistantEffectue(),
         ]);
 
         return redirect()->route('analyses.show', $analyse);
