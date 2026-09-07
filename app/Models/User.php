@@ -21,6 +21,7 @@ class User extends Authenticatable
         'telephone',
         'statut',
         'role',
+        'google_id',
         'tentatives_echouees',
     ];
 

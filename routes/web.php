@@ -11,6 +11,7 @@ use App\Http\Controllers\ModerationController;
 use App\Http\Controllers\PreuveController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatistiqueController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,9 @@ Route::middleware('guest')->group(function () {
     // Formulaires : simples vues, pas de méthode dédiée dans AuthController
     Route::view('/inscription', 'auth.register')->name('register');
     Route::view('/connexion', 'auth.login')->name('login');
+
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
     // Traitement
     Route::post('/inscription', [AuthController::class, 'register'])->name('register.store');

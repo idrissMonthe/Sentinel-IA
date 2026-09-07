@@ -251,7 +251,35 @@ h1, h2, h3, h4, h5, h6,
     transform: translateY(-9.5px) rotate(-45deg);
     background-color: var(--green-ai);
 }
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--text-secondary);
+    margin: 20px 0;
+    font-size: 0.85rem;
+}
 
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-glow);
+}
+
+.auth-divider span {
+    padding: 0 12px;
+}
+
+.btn-google {
+    background-color: #ffffff;
+    color: #1f2937;
+    border: 1px solid var(--border-glow);
+}
+
+.btn-google:hover {
+    background-color: #f1f5f9;
+}
 /* ==========================================================================
    BOUTONS MODERNISÉS
    ========================================================================== */

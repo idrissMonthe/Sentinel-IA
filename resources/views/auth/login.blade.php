@@ -31,6 +31,13 @@ fill="currentColor" viewBox="0 0 24 24" >
             <!-- Bouton de soumission -->
             <button type="submit" class="btn btn-primary btn-block fade-in-element delay-4">Se connecter</button>
         </form>
+            <div class="auth-divider">
+                <span>ou</span>
+            </div>
+
+            <a href="{{ route('auth.google') }}" class="btn btn-google btn-block">
+                Continuer avec Google
+            </a>
 
         <!-- Lien vers l'inscription -->
         <div class="auth-footer fade-in-element delay-5">

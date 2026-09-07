@@ -59,6 +59,14 @@ fill="currentColor" viewBox="0 0 24 24" >
             <button type="submit" class="btn btn-primary btn-block fade-in-element delay-8">M'inscrire</button>
         </form>
 
+                <div class="auth-divider">
+            <span>ou</span>
+        </div>
+
+        <a href="{{ route('auth.google') }}" class="btn btn-google btn-block">
+            Continuer avec Google
+        </a>
+
         <div class="auth-footer fade-in-element delay-9">
             <p>Déjà un compte ? <a href="{{ route('login') }}">Connectez-vous ici</a>.</p>
         </div>

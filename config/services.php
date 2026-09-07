@@ -42,5 +42,11 @@ return [
         'retry_attempts' => (int) env('OPENAI_RETRY_ATTEMPTS', 2),
         'retry_delay_ms' => (int) env('OPENAI_RETRY_DELAY_MS', 250),
     ],
+    
+    'google' => [
+    'client_id' => env('GOOGLE_CLIENT_ID'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    'redirect' => env('GOOGLE_REDIRECT_URI'),
+],
 
 ];
