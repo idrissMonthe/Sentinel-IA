@@ -25,7 +25,8 @@ fill="currentColor" viewBox="0 0 24 24" >
 
             <div class="form-group fade-in-element delay-3">
                 <label for="password">Mot de passe</label>
-                <input type="password" id="password" name="password" required placeholder="Votre mot de passe">
+                <div class="password-input"><input type="password" id="password" name="password" required placeholder="Votre mot de passe"><button type="button" class="password-toggle" aria-label="Afficher le mot de passe" data-password-toggle="password">Afficher</button></div>
+                <a class="form-help-link" href="{{ route('password.request') }}">Mot de passe oublié ?</a>
             </div>
 
             <!-- Bouton de soumission -->

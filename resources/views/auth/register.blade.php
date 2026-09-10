@@ -47,13 +47,13 @@ fill="currentColor" viewBox="0 0 24 24" >
 
             <div class="form-group fade-in-element delay-6">
                 <label for="password">Mot de passe</label>
-                <input type="password" id="password" name="password" required placeholder="8 caractères minimum">
+                <div class="password-input"><input type="password" id="password" name="password" required placeholder="8 caractères minimum"><button type="button" class="password-toggle" aria-label="Afficher le mot de passe" data-password-toggle="password">Afficher</button></div>
                 @error('password') <span class="error-text">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-group fade-in-element delay-7">
                 <label for="password_confirmation">Confirmer le mot de passe</label>
-                <input type="password" id="password_confirmation" name="password_confirmation" required placeholder="Retapez votre mot de passe">
+                <div class="password-input"><input type="password" id="password_confirmation" name="password_confirmation" required placeholder="Retapez votre mot de passe"><button type="button" class="password-toggle" aria-label="Afficher la confirmation du mot de passe" data-password-toggle="password_confirmation">Afficher</button></div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block fade-in-element delay-8">M'inscrire</button>

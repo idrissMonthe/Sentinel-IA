@@ -11,6 +11,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -29,9 +32,7 @@ class AuthController extends Controller
             'role' => UserRole::UTILISATEUR,
         ]);
 
-        Auth::login($user);
-
-        return redirect()->route('accueil');
+        return redirect()->route('login')->with('status', 'Compte créé avec succès. Connectez-vous pour continuer.');
     }
 
     // Scénario nominal + exceptions 4.1, 5.1, 5.2 de la fiche "S'authentifier"
@@ -73,6 +74,54 @@ class AuthController extends Controller
         Auth::user()->update(['tentatives_echouees' => 0]);
 
         return redirect()->intended(route('accueil'));
+    }
+
+    public function showForgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function sendResetLink(Request $request): RedirectResponse
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        // Réponse volontairement générique : elle ne révèle pas si l'adresse existe.
+        Password::sendResetLink($request->only('email'));
+
+        return back()->with('status', 'Si cette adresse est associée à un compte, un lien de réinitialisation vient d’être envoyé.');
+    }
+
+    public function showResetPasswordForm(string $token)
+    {
+        return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
+    }
+
+    public function resetPassword(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'token' => ['required'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => $password,
+                    'remember_token' => Str::random(60),
+                    'tentatives_echouees' => 0,
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('status', 'Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.');
+        }
+
+        return back()->withInput($request->only('email'))->withErrors(['email' => __($status)]);
     }
 
     public function logout(Request $request): RedirectResponse

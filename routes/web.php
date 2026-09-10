@@ -31,6 +31,10 @@ Route::middleware('guest')->group(function () {
     // Formulaires : simples vues, pas de méthode dédiée dans AuthController
     Route::view('/inscription', 'auth.register')->name('register');
     Route::view('/connexion', 'auth.login')->name('login');
+    Route::get('/mot-de-passe-oublie', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/mot-de-passe-oublie', [AuthController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reinitialiser-mot-de-passe/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reinitialiser-mot-de-passe', [AuthController::class, 'resetPassword'])->name('password.update');
 
     Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
