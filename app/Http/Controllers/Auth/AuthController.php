@@ -71,7 +71,8 @@ class AuthController extends Controller
 
         // Connexion réussie : réinitialiser le compteur
         $request->session()->regenerate();
-        Auth::user()->update(['tentatives_echouees' => 0]);
+        $user = Auth::user();
+        $user->update(['tentatives_echouees' => 0]);
 
         return redirect()->intended(route('accueil'));
     }
@@ -83,7 +84,9 @@ class AuthController extends Controller
 
     public function sendResetLink(Request $request): RedirectResponse
     {
-        $request->validate(['email' => ['required', 'email']]);
+        $request->validate([
+            'email' => ['required', 'email:rfc', 'regex:/^[^@\s]+@[^@\s]+\.[^@\s]+$/i'],
+        ]);
 
         // Réponse volontairement générique : elle ne révèle pas si l'adresse existe.
         Password::sendResetLink($request->only('email'));
@@ -100,7 +103,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'token' => ['required'],
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email:rfc', 'regex:/^[^@\s]+@[^@\s]+\.[^@\s]+$/i'],
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 

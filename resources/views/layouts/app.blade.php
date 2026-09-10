@@ -38,7 +38,6 @@
                             <div class="nav-dropdown-menu">
                                 <a href="{{ route('profile.historique') }}" class="nav-link">Mon historique</a>
                                 <a href="{{ route('profile.edit') }}" class="nav-link">Paramètres du profil</a>
-                                <a href="{{ route('statistiques.index') }}" class="nav-link">Mes statistiques</a>
                             </div>
                         </li>
                         <li class="nav-dropdown">
@@ -77,7 +76,7 @@
         <div class="container footer-inner">
             <div><a href="{{ route('accueil') }}" class="brand-logo footer-brand">SENTINEL<span class="ia-text">IA</span></a><p class="footer-note">La vigilance numérique, pensée pour le Cameroun.</p></div>
             <div class="footer-links"><a href="{{ route('base-collaborative.index') }}">Base collaborative</a><a href="{{ route('alertes.index') }}">Alertes</a><a href="{{ route('statistiques.index') }}">Statistiques</a></div>
-            <p class="footer-copyright">© {{ date('Y') }} Sentinel IA</p>
+            <p class="footer-copyright">© {{ date('Y') }} MONTHE AHMED, Sentinel IA</p>
         </div>
     </footer>
 </body>

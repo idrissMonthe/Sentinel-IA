@@ -19,7 +19,7 @@ class LoginRequest extends FormRequest
         // dépend de l'état en base, pas seulement du format des champs — elle reste
         // dans AuthController::login(), une Request ne peut pas la porter proprement.
         return [
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email:rfc', 'regex:/^[^@\s]+@[^@\s]+\.[^@\s]+$/i'],
             'password' => ['required'],
         ];
     }
@@ -28,4 +28,12 @@ class LoginRequest extends FormRequest
     throw (new ValidationException($validator))
         ->redirectTo(route('login'));
 }
+
+    public function messages(): array
+    {
+        return [
+            'email.email' => 'Saisissez une adresse email valide.',
+            'email.regex' => 'Saisissez une adresse email complète, par exemple example@test.com.',
+        ];
+    }
 }

@@ -142,3 +142,11 @@ Route::middleware('auth')->prefix('admin/utilisateurs')->name('admin.utilisateur
     Route::patch('/{user}/bloquer', [UtilisateurController::class, 'bloquer'])->name('bloquer');
     Route::patch('/{user}/debloquer', [UtilisateurController::class, 'debloquer'])->name('debloquer');
 });
+
+// Toute adresse inconnue ramène vers un accueil utile et contextualisé.
+Route::fallback(function () {
+    return redirect()->route('accueil')->with(
+        'not_found',
+        'Cette adresse n’existe pas. Nous vous avons ramené à l’accueil pour continuer votre recherche.'
+    );
+});

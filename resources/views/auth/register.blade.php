@@ -35,13 +35,14 @@ fill="currentColor" viewBox="0 0 24 24" >
 
             <div class="form-group fade-in-element delay-4">
                 <label for="email">Adresse Email</label>
-                <input type="email" id="email" name="email" value="{{ old('email') }}" required placeholder="exemple@email.com">
+                <input type="email" id="email" name="email" value="{{ old('email') }}" required autocomplete="email" inputmode="email" placeholder="example@test.com">
                 @error('email') <span class="error-text">{{ $message }}</span> @enderror
             </div>
 
             <div class="form-group fade-in-element delay-5">
                 <label for="telephone">Téléphone</label>
-                <input type="text" id="telephone" name="telephone" value="{{ old('telephone') }}" placeholder="+237 6XX XX XX XX">
+                <input type="tel" id="telephone" name="telephone" value="{{ old('telephone') }}" inputmode="numeric" pattern="6[0-9]{8}" maxlength="9" placeholder="6XXXXXXXX" aria-describedby="telephone-help">
+                <small id="telephone-help" class="field-hint">9 chiffres, sans espaces — exemple : 690123456</small>
                 @error('telephone') <span class="error-text">{{ $message }}</span> @enderror
             </div>
 
