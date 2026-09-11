@@ -8,6 +8,7 @@ use App\Models\Analyse;
 use App\Models\EntiteSuspecte;
 use App\Models\Signalement;
 use App\Services\Analyse\AnalyseIAService;
+use App\Services\Analyse\AnalyseIAIndisponibleException;
 use App\Services\Analyse\QuotaAnalyseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -96,7 +97,13 @@ class SignalementController extends Controller
             ]);
         }
 
-        $descriptionAmelioree = $service->ameliorerRedaction($data['type'], $data['contenu']);
+        try {
+            $descriptionAmelioree = $service->ameliorerRedaction($data['type'], $data['contenu']);
+        } catch (AnalyseIAIndisponibleException) {
+            return back()->withInput()->withErrors([
+                'ia' => 'L’analyse IA est indisponible. Aucun mode dégradé n’a été utilisé. Réessayez plus tard.',
+            ]);
+        }
 
         // Trace conservée pour le comptage du quota (toujours un appel IA facturé),
         // sans score de fiabilité : ce n'est pas une analyse de fraude.

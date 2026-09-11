@@ -3,59 +3,53 @@
 @section('title', 'Statistiques de la plateforme - SENTINEL IA')
 
 @section('content')
-<div class="container fade-in">
-    <div class="text-center" style="margin-bottom: 40px;">
-        <h1 class="page-title" style="color: var(--blue-glow);">L'impact de SENTINEL IA</h1>
-        <p class="text-secondary">Les chiffres en temps réel de notre lutte contre la cybercriminalité.</p>
-    </div>
+<div class="stats-page fade-in">
+    <header class="stats-header">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> Les chiffres du réseau</span>
+        <h1 class="page-title">L’impact de SENTINEL IA</h1>
+        <p class="text-secondary">Ce que la vigilance collective permet de rendre visible.</p>
+    </header>
 
-    <!-- Top Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
-        <div class="card text-center" style="border-top: 4px solid var(--blue-glow);">
-            <h3 class="text-secondary" style="font-size: 1.1rem;">Analyses IA effectuées</h3>
-            <div style="font-size: 3rem; font-weight: bold; color: var(--text-primary); margin: 10px 0;">{{ $statistiques->analyses_effectuees }}</div>
-        </div>
-        <div class="card text-center" style="border-top: 4px solid var(--success);">
-            <h3 class="text-secondary" style="font-size: 1.1rem;">Arnaques confirmées</h3>
-            <div style="font-size: 3rem; font-weight: bold; color: var(--success); margin: 10px 0;">{{ $statistiques->total_signalement_actifs }}</div>
-        </div>
-        <div class="card text-center" style="border-top: 4px solid var(--warning);">
-            <h3 class="text-secondary" style="font-size: 1.1rem;">Utilisateurs protégés</h3>
-            <div style="font-size: 3rem; font-weight: bold; color: var(--warning); margin: 10px 0;">{{ $statistiques->utilisateurs_proteges }}</div>
-        </div>
-    </div>
+    <section class="stats-metrics" aria-label="Indicateurs principaux">
+        <article class="stats-metric stats-metric-cyan">
+            <span class="stats-metric-label">Analyses IA effectuées</span>
+            <strong>{{ $statistiques->analyses_effectuees }}</strong>
+            <span class="stats-metric-note">contenus examinés</span>
+        </article>
+        <article class="stats-metric stats-metric-coral">
+            <span class="stats-metric-label">Arnaques confirmées</span>
+            <strong>{{ $statistiques->total_signalement_actifs }}</strong>
+            <span class="stats-metric-note">signalements actifs</span>
+        </article>
+        <article class="stats-metric stats-metric-gold">
+            <span class="stats-metric-label">Utilisateurs protégés</span>
+            <strong>{{ $statistiques->utilisateurs_proteges }}</strong>
+            <span class="stats-metric-note">membres du réseau</span>
+        </article>
+    </section>
 
-    <!-- Section Détails -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
-        <!-- Top Types d'arnaques -->
-        <div class="card">
-            <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-glow); padding-bottom: 10px;">Types de menaces les plus signalés</h3>
-            <ul style="list-style: none; padding: 0; margin: 0;">
+    <section class="stats-detail-grid" aria-label="Détails des signalements">
+        <article class="stats-card">
+            <div class="stats-card-heading"><span class="stats-card-kicker">Répartition</span><h2>Types de menaces les plus signalés</h2></div>
+            <ul class="stats-list">
                 @forelse($statistiques->menaces_frequentes ?? [] as $menace)
-                    <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-weight: bold; color: var(--text-secondary);">{{ $menace['label'] }}</span>
-                        <span style="color: var(--danger); font-weight: bold;">{{ $menace['total'] }} entités</span>
-                    </li>
+                    <li><span>{{ $menace['label'] }}</span><strong>{{ $menace['total'] }} entités</strong></li>
                 @empty
-                    <li class="text-secondary">Données insuffisantes pour le moment.</li>
+                    <li class="stats-empty">Données insuffisantes pour le moment.</li>
                 @endforelse
             </ul>
-        </div>
+        </article>
 
-        <!-- Top Villes (Si tu as implémenté le suivi géo) -->
-        <div class="card">
-            <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-glow); padding-bottom: 10px;">Zones les plus touchées</h3>
-            <ul style="list-style: none; padding: 0; margin: 0;">
+        <article class="stats-card">
+            <div class="stats-card-heading"><span class="stats-card-kicker">Géographie</span><h2>Zones les plus touchées</h2></div>
+            <ul class="stats-list">
                 @forelse($statistiques->zones_touchees ?? [] as $zone)
-                    <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <span style="font-weight: bold; color: var(--text-secondary);">{{ $zone['label'] ?: 'Non renseigné' }}</span>
-                        <span style="color: var(--warning); font-weight: bold;">{{ $zone['total'] }} cas</span>
-                    </li>
+                    <li><span>{{ $zone['label'] ?: 'Non renseigné' }}</span><strong>{{ $zone['total'] }} cas</strong></li>
                 @empty
-                    <li class="text-secondary">Données insuffisantes pour le moment.</li>
+                    <li class="stats-empty">Données insuffisantes pour le moment.</li>
                 @endforelse
             </ul>
-        </div>
-    </div>
+        </article>
+    </section>
 </div>
 @endsection

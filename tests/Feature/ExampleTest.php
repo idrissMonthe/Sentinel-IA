@@ -16,4 +16,12 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_unknown_routes_use_the_custom_not_found_page(): void
+    {
+        $response = $this->get('/adresse-inconnue');
+
+        $response->assertNotFound()
+            ->assertSee('Cette page n');
+    }
 }

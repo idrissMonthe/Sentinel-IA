@@ -50,18 +50,34 @@ class AnalyseAccessAndQuotaTest extends TestCase
             ->assertSessionHasErrors('type');
     }
 
-    public function test_local_fallback_without_an_openai_response_does_not_consume_quota(): void
+    public function test_unavailable_openai_returns_a_clear_error_without_creating_an_analysis(): void
     {
         config(['services.openai.api_key' => null]);
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->post(route('analyses.store'), ['type' => 'texte', 'contenu' => 'Bonjour'])
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasErrors('ia');
 
-        $analyse = $user->fresh()->analyses()->firstOrFail();
-
-        $this->assertFalse($analyse->api_appel_effectue);
+        $this->assertDatabaseCount('analyses', 0);
         $this->assertFalse(app(QuotaAnalyseService::class)->quotaAtteint($user->fresh()));
+    }
+
+    public function test_zero_score_does_not_show_the_report_button(): void
+    {
+        $user = User::factory()->create();
+        $analyse = Analyse::create([
+            'user_id' => $user->id,
+            'type' => 'texte',
+            'date_analyse' => now(),
+            'score_fiabilite' => 0,
+            'conclusion' => 'Aucun indice fort détecté.',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('analyses.show', $analyse))
+            ->assertOk()
+            ->assertDontSee('Signaler cette arnaque');
     }
 }

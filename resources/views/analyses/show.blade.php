@@ -40,9 +40,11 @@
 
             <div class="action-buttons">
                 <!-- Lien pré-rempli vers la création d'un signalement (Cas A du cahier des charges) -->
-                <a href="{{ route('signalements.create') . '?analyse_id=' . $analyse->id }}" class="btn btn-signal btn-block">
-                    🚨 Signaler cette arnaque
-                </a>
+                @if((float) $analyse->score_fiabilite > 0)
+                    <a href="{{ route('signalements.create') . '?analyse_id=' . $analyse->id }}" class="btn btn-signal btn-block">
+                        🚨 Signaler cette arnaque
+                    </a>
+                @endif
 
                 <!-- Lien pour générer la vue imprimable -->
             </div>

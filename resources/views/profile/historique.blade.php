@@ -3,21 +3,21 @@
 @section('title', 'Mon Historique - SENTINEL IA')
 
 @section('content')
-<div class="container fade-in">
+<div class="profile-history-page fade-in">
     <!-- En-tête du profil -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; border-bottom: 1px solid var(--border-glow); padding-bottom: 20px;">
+    <div class="profile-history-header">
         <div>
             <h1 class="page-title" style="color: var(--blue-glow); margin-bottom: 5px;">Mon Espace</h1>
             <p class="text-secondary">Gérez vos informations et suivez l'impact de vos signalements et analyses.</p>
         </div>
-        <a href="{{ route('signalements.create') }}" class="btn btn-signal" style="box-shadow: 0 0 15px var(--danger)40;">+ Nouveau Signalement</a>
+        <a href="{{ route('signalements.create') }}" class="btn btn-signal">+ Nouveau Signalement</a>
     </div>
 
-    <div style="display: flex; gap: 30px;">
+    <div class="profile-history-layout">
         <!-- Barre latérale -->
-        <aside style="width: 250px; flex-shrink: 0;">
-            <div class="card" style="padding: 20px;">
-                <nav style="display: flex; flex-direction: column; gap: 10px;">
+        <aside class="profile-history-sidebar">
+            <div class="card profile-history-nav">
+                <nav>
                     <a href="{{ route('profile.edit') }}" style="color: var(--text-secondary); text-decoration: none; padding: 10px; border-radius: 8px; transition: 0.3s;">
                         Mes informations & Sécurité
                     </a>
@@ -29,9 +29,9 @@
         </aside>
 
         <!-- Contenu principal : Historique -->
-        <div style="flex: 1;">
+        <div class="profile-history-content">
             <!-- Filtres rapides (S'appliquent principalement aux signalements) -->
-            <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <div class="profile-history-filters">
                 <a href="{{ route('profile.historique') }}" class="badge {{ request('statut') ? 'badge-outline' : 'badge-active' }}">Tous</a>
                 <a href="{{ route('profile.historique', ['statut' => 'en_attente']) }}" class="badge {{ request('statut') == 'en_attente' ? 'badge-warning' : 'badge-outline' }}">En attente</a>
                 <a href="{{ route('profile.historique', ['statut' => 'valide']) }}" class="badge {{ request('statut') == 'valide' ? 'badge-success' : 'badge-outline' }}">Validés</a>
@@ -39,12 +39,12 @@
             </div>
 
             <!-- Liste des activités (Signalements + Analyses) -->
-            <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="profile-history-list">
                 @forelse ($activites as $activite)
-                    <div class="card fade-in-element" style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
+                    <div class="card profile-history-item fade-in-element">
                         
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <div class="profile-history-item-body">
+                            <div class="profile-history-item-meta">
                                 
                                 <!-- Badge de Type (Signalement ou Analyse) -->
                                 @if($activite['type'] === 'signalement')
@@ -79,12 +79,12 @@
                             </p>
                         </div>
 
-                        <div style="margin-left: 20px; text-align: right;">
+                        <div class="profile-history-item-action">
                             <a href="{{ $activite['lien'] }}" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Détails</a>
                         </div>
                     </div>
                 @empty
-                    <div class="card text-center" style="padding: 40px; border: 1px dashed var(--border-glow); background: transparent;">
+                    <div class="card profile-history-empty text-center">
                         <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 5px;">Votre historique est vierge.</p>
                         <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0;">Analysez ou signalez votre première menace pour aider la communauté.</p>
                     </div>

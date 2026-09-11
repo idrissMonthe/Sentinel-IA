@@ -7,9 +7,9 @@ Enum StatutSignalement: String {
     public function label(): string
     {
         return match($this) {
-            self::EN_ATTENTE => 'en_attente',
-            self::VALIDE => 'valide',
-            self::REJETE => 'rejete',
+            self::EN_ATTENTE => 'En attente',
+            self::VALIDE => 'Validé',
+            self::REJETE => 'Rejeté',
         };
     }
     public function color(): string 

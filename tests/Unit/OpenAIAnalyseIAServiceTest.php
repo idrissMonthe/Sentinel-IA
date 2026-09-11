@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Analyse\OpenAIAnalyseIAService;
+use App\Services\Analyse\AnalyseIAIndisponibleException;
 use App\Services\Analyse\RulesBasedAnalyseIAService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -39,53 +40,61 @@ class OpenAIAnalyseIAServiceTest extends TestCase
         $this->assertSame([50, 'Informations insuffisantes, vérifiez la source.'], $this->service()->analyser('numero', '677000000'));
     }
 
-    public function test_invalid_json_uses_the_local_fallback(): void
+    public function test_invalid_json_reports_ia_unavailability(): void
     {
         Http::fake(['api.openai.com/*' => $this->response('Ce n’est pas du JSON')]);
 
-        [$score, $conclusion] = $this->service()->analyser('texte', 'Bonjour, comment allez-vous ?');
-
-        $this->assertSame(0, $score);
-        $this->assertStringContainsString('mode dégradé', $conclusion);
+        $this->expectException(AnalyseIAIndisponibleException::class);
+        $this->service()->analyser('texte', 'Bonjour, comment allez-vous ?');
     }
 
-    public function test_out_of_range_score_uses_the_local_fallback(): void
+    public function test_out_of_range_score_reports_ia_unavailability(): void
     {
         Http::fake(['api.openai.com/*' => $this->response('{"score_fiabilite": 101, "conclusion": "Valeur invalide."}')]);
 
-        $this->assertSame(0, $this->service()->analyser('texte', 'Bonjour')[0]);
+        $this->expectException(AnalyseIAIndisponibleException::class);
+        $this->service()->analyser('texte', 'Bonjour');
     }
 
-    public function test_conclusion_with_more_than_three_sentences_uses_the_local_fallback(): void
+    public function test_invalid_conclusion_reports_ia_unavailability(): void
     {
         Http::fake(['api.openai.com/*' => $this->response('{"score_fiabilite": 50, "conclusion": "Une. Deux. Trois. Quatre."}')]);
 
-        $this->assertSame(0, $this->service()->analyser('texte', 'Bonjour')[0]);
+        $this->expectException(AnalyseIAIndisponibleException::class);
+        $this->service()->analyser('texte', 'Bonjour');
     }
 
-    public function test_http_error_uses_the_local_fallback(): void
+    public function test_http_error_reports_ia_unavailability(): void
     {
         Http::fake(['api.openai.com/*' => Http::response(['error' => 'indisponible'], 503)]);
 
-        $this->assertSame(0, $this->service()->analyser('texte', 'Bonjour')[0]);
+        $this->expectException(AnalyseIAIndisponibleException::class);
+        $this->service()->analyser('texte', 'Bonjour');
     }
 
-    public function test_server_error_is_retried_once_then_uses_fallback(): void
+    public function test_server_error_is_retried_once_then_reports_ia_unavailability(): void
     {
         Http::fake(['api.openai.com/*' => Http::response(['error' => 'indisponible'], 503)]);
 
         $service = $this->service();
 
-        $this->assertSame(0, $service->analyser('texte', 'Bonjour')[0]);
+        try {
+            $service->analyser('texte', 'Bonjour');
+            $this->fail('Une exception d’indisponibilité était attendue.');
+        } catch (AnalyseIAIndisponibleException) {
+            // Comportement attendu.
+        }
+
         $this->assertTrue($service->appelDistantEffectue());
         Http::assertSentCount(2);
     }
 
-    public function test_connection_error_uses_the_local_fallback(): void
+    public function test_connection_error_reports_ia_unavailability(): void
     {
         Http::fake(fn () => throw new ConnectionException('timeout'));
 
-        $this->assertSame(0, $this->service()->analyser('texte', 'Bonjour')[0]);
+        $this->expectException(AnalyseIAIndisponibleException::class);
+        $this->service()->analyser('texte', 'Bonjour');
     }
 
     public function test_all_text_content_types_are_sent_as_untrusted_context(): void
@@ -148,16 +157,17 @@ class OpenAIAnalyseIAServiceTest extends TestCase
         $this->assertSame('La victime a reçu une demande de paiement suspecte.', $this->service()->ameliorerRedaction('texte', 'demande paiement'));
     }
 
-    public function test_empty_reformulation_uses_the_local_fallback(): void
+    public function test_empty_reformulation_reports_ia_unavailability(): void
     {
         Http::fake(['api.openai.com/*' => $this->response('')]);
 
-        $this->assertStringContainsString('Mode dégradé', $this->service()->ameliorerRedaction('texte', 'demande paiement'));
+        $this->expectException(AnalyseIAIndisponibleException::class);
+        $this->service()->ameliorerRedaction('texte', 'demande paiement');
     }
 
     private function service(): OpenAIAnalyseIAService
     {
-        return new OpenAIAnalyseIAService(new RulesBasedAnalyseIAService());
+        return new OpenAIAnalyseIAService();
     }
 
     private function response(string $content)

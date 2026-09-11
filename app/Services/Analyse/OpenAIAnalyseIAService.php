@@ -12,10 +12,6 @@ class OpenAIAnalyseIAService implements AnalyseIAService
     private const MAX_IMAGE_SIZE = 5_242_880;
     private bool $appelDistantEffectue = false;
 
-    public function __construct(private RulesBasedAnalyseIAService $fallback)
-    {
-    }
-
     public function analyser(string $type, string $contenu): array
     {
         $this->appelDistantEffectue = false;
@@ -38,8 +34,12 @@ class OpenAIAnalyseIAService implements AnalyseIAService
                 'code' => $exception->getCode(),
             ]);
 
-            return $this->fallback->analyser($type, $contenu);
-                }
+            throw new AnalyseIAIndisponibleException(
+                'Le service d’analyse IA est indisponible.',
+                (int) $exception->getCode(),
+                $exception,
+            );
+        }
     }
 
     public function ameliorerRedaction(string $type, string $contenuBrut): string
@@ -70,7 +70,11 @@ class OpenAIAnalyseIAService implements AnalyseIAService
                 'code' => $exception->getCode(),
             ]);
 
-            return $this->fallback->ameliorerRedaction($type, $contenuBrut);
+            throw new AnalyseIAIndisponibleException(
+                'Le service d’analyse IA est indisponible.',
+                (int) $exception->getCode(),
+                $exception,
+            );
         }
     }
 

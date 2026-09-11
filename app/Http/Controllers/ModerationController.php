@@ -6,6 +6,7 @@ use App\Enums\StatutSignalement;
 use App\Models\Signalement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ModerationController extends Controller
 {
@@ -29,13 +30,32 @@ class ModerationController extends Controller
     {
         $this->authorize('valider', $signalement);
 
-        $signalement->update([
-            'statut' => StatutSignalement::VALIDE,
-            'moderateur_id' => $request->user()->id,
-        ]);
+        $traite = DB::transaction(function () use ($request, $signalement): bool {
+            $updated = Signalement::query()
+                ->whereKey($signalement->getKey())
+                ->where('statut', StatutSignalement::EN_ATTENTE)
+                ->update([
+                    'statut' => StatutSignalement::VALIDE,
+                    'moderateur_id' => $request->user()->id,
+                    'updated_at' => now(),
+                ]);
 
-        // Un signalement validé fait progresser le compteur de l'entité concernée
-        $signalement->entiteSuspecte?->increment('nombre_signalement');
+            if ($updated !== 1) {
+                return false;
+            }
+
+            // Le compteur ne progresse qu'une seule fois, lors du passage
+            // effectif de « en attente » à « valide ».
+            $signalement->entiteSuspecte?->increment('nombre_signalement');
+
+            return true;
+        });
+
+        if (! $traite) {
+            return back()->withErrors([
+                'moderation' => 'Ce signalement a déjà été traité.',
+            ]);
+        }
 
         return back()->with('status', 'Signalement validé.');
     }
@@ -45,10 +65,20 @@ class ModerationController extends Controller
     {
         $this->authorize('rejeter', $signalement);
 
-        $signalement->update([
-            'statut' => StatutSignalement::REJETE,
-            'moderateur_id' => $request->user()->id,
-        ]);
+        $updated = Signalement::query()
+            ->whereKey($signalement->getKey())
+            ->where('statut', StatutSignalement::EN_ATTENTE)
+            ->update([
+                'statut' => StatutSignalement::REJETE,
+                'moderateur_id' => $request->user()->id,
+                'updated_at' => now(),
+            ]);
+
+        if ($updated !== 1) {
+            return back()->withErrors([
+                'moderation' => 'Ce signalement a déjà été traité.',
+            ]);
+        }
 
         return back()->with('status', 'Signalement rejeté.');
     }

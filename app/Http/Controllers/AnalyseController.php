@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Analyse;
 use App\Http\Requests\StoreAnalyseRequest;
 use App\Services\Analyse\AnalyseIAService;
+use App\Services\Analyse\AnalyseIAIndisponibleException;
 use App\Services\Analyse\ContenuLienFetcher;
 use App\Services\Analyse\QuotaAnalyseService;
 use Illuminate\Http\RedirectResponse;
@@ -45,12 +46,20 @@ class AnalyseController extends Controller
         if ($data['type'] === 'lien') {
             $contenuRecupere = $this->contenuLienFetcher->recuperer($contenu);
             if ($contenuRecupere !== null) {
-                // L'URL initiale reste utile à l'IA et au fallback pour détecter les signaux de domaine.
+                // L'URL initiale reste utile à l'IA pour détecter les signaux de domaine.
                 $contenu = "URL soumise : {$contenu}\n\n{$contenuRecupere}";
             }
         }
 
-        [$score, $conclusion] = $this->analyseIAService->analyser($data['type'], $contenu);
+        try {
+            [$score, $conclusion] = $this->analyseIAService->analyser($data['type'], $contenu);
+        } catch (AnalyseIAIndisponibleException) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'ia' => 'L’analyse IA est indisponible. Aucun mode dégradé n’a été utilisé. Réessayez plus tard.',
+                ]);
+        }
 
         // mettreAJourScore() est appliqué ici, au retour de l'appel IA
         $analyse = $request->user()->analyses()->create([

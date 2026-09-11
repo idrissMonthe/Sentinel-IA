@@ -3,15 +3,15 @@
 @section('title', 'Modération - SENTINEL IA')
 
 @section('content')
-<div class="container fade-in">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div class="moderation-page fade-in">
+    <div class="moderation-header">
         <h1 class="page-title">File d'attente de Modération</h1>
         <a href="{{ route('moderation.doublons') }}" class="btn btn-secondary" style="border: 1px solid var(--warning); color: var(--warning);">Voir les doublons suspects</a>
     </div>
 
-    <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-glow);">
-            <thead style="background: var(--bg-surface);">
+    <div class="moderation-table-wrap">
+        <table class="moderation-table">
+            <thead>
                 <tr>
                     <th style="padding: 15px; text-align: left; color: var(--text-secondary);">Date</th>
                     <th style="padding: 15px; text-align: left; color: var(--text-secondary);">Entité</th>
@@ -22,10 +22,10 @@
             <tbody>
                 @forelse ($signalements as $signalement)
                     <tr style="border-top: 1px solid var(--border-glow);">
-                        <td style="padding: 15px;">{{ $signalement->created_at->format('d/m/Y H:i') }}</td>
-                        <td style="padding: 15px; font-weight: bold;">{{ $signalement->entiteSuspecte->valeur }}</td>
-                        <td style="padding: 15px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $signalement->description }}</td>
-                        <td style="padding: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                        <td data-label="Date">{{ $signalement->created_at->format('d/m/Y H:i') }}</td>
+                        <td data-label="Entité" class="moderation-entity">{{ $signalement->entiteSuspecte->valeur }}</td>
+                        <td data-label="Description" class="moderation-description">{{ $signalement->description }}</td>
+                        <td data-label="Actions" class="moderation-actions">
                             <form action="{{ route('moderation.valider', $signalement) }}" method="POST">
                                 @csrf @method('PATCH')
                                 <button type="submit" class="btn" style="background: var(--success); color: #000; padding: 6px 12px; min-height: auto;">Valider</button>
@@ -39,14 +39,14 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" style="padding: 30px; text-align: center;">La file d'attente est vide. Beau travail !</td>
+                        <td colspan="4" class="moderation-empty">La file d'attente est vide. Beau travail !</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    <div style="margin-top: 30px; display: flex; justify-content: center;">
+    <div class="pagination-wrap">
         {{ $signalements->links() }}
     </div>
 </div>
