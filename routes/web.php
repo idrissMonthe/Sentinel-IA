@@ -139,8 +139,12 @@ Route::get('/statistiques', [StatistiqueController::class, 'index'])->name('stat
 */
 Route::middleware('auth')->prefix('admin/utilisateurs')->name('admin.utilisateurs.')->group(function () {
     Route::get('/', [UtilisateurController::class, 'index'])->name('index');
+    Route::get('/creer', [UtilisateurController::class, 'create'])->name('create');
+    Route::post('/', [UtilisateurController::class, 'store'])->name('store');
+    Route::patch('/{user}/role', [UtilisateurController::class, 'updateRole'])->name('role');
     Route::patch('/{user}/bloquer', [UtilisateurController::class, 'bloquer'])->name('bloquer');
     Route::patch('/{user}/debloquer', [UtilisateurController::class, 'debloquer'])->name('debloquer');
+    Route::delete('/{user}', [UtilisateurController::class, 'destroy'])->name('destroy');
 });
 
 // Toute adresse inconnue affiche la page 404 de l'application.
