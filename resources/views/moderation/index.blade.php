@@ -1,3 +1,4 @@
+```blade
 @extends('layouts.app')
 
 @section('title', 'Modération - SENTINEL IA')
@@ -26,12 +27,21 @@
                         <td data-label="Entité" class="moderation-entity">{{ $signalement->entiteSuspecte->valeur }}</td>
                         <td data-label="Description" class="moderation-description">{{ $signalement->description }}</td>
                         <td data-label="Actions" class="moderation-actions">
-                            <form action="{{ route('moderation.valider', $signalement) }}" method="POST">
+                            <form
+                                action="{{ route('moderation.valider', $signalement) }}"
+                                method="POST"
+                                data-confirm="Confirmer la validation de ce signalement ?"
+                            >
                                 @csrf @method('PATCH')
                                 <button type="submit" class="btn" style="background: var(--success); color: #000; padding: 6px 12px; min-height: auto;">Valider</button>
                                 <a href="{{ route('signalements.show', $signalement) }}" class="btn btn-secondary">Voir le détail</a>
                             </form>
-                            <form action="{{ route('moderation.rejeter', $signalement) }}" method="POST">
+
+                            <form
+                                action="{{ route('moderation.rejeter', $signalement) }}"
+                                method="POST"
+                                data-confirm="Confirmer le rejet de ce signalement ?"
+                            >
                                 @csrf @method('PATCH')
                                 <button type="submit" class="btn btn-signal" style="padding: 6px 12px; min-height: auto;">Rejeter</button>
                             </form>
@@ -51,3 +61,4 @@
     </div>
 </div>
 @endsection
+```

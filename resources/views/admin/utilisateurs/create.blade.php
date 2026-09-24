@@ -7,7 +7,7 @@
     <div class="auth-card">
         <h2 class="auth-title" style="color: #c084fc;">Ajouter un utilisateur</h2>
 
-        <form action="{{ route('admin.utilisateurs.store') }}" method="POST" class="auth-form">
+        <form action="{{ route('admin.utilisateurs.store') }}" method="POST" class="auth-form" data-confirm="Confirmer la création de ce compte ? Ses identifiants lui seront envoyés par email.">
             @csrf
 
             <div class="form-group">

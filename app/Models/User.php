@@ -25,11 +25,15 @@ class User extends Authenticatable implements CanResetPasswordContract
         'role',
         'google_id',
         'tentatives_echouees',
+        'code_2fa', 
+        'code_2fa_expire_a', 
+        'code_2fa_tentatives',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'code_2fa'
     ];
     protected function casts(): array
     {
@@ -37,6 +41,7 @@ class User extends Authenticatable implements CanResetPasswordContract
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'code_2fa_expire_a' => 'datetime',
         ];
     }
     public function signalements(): HasMany

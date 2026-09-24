@@ -12,6 +12,9 @@ use App\Http\Controllers\PreuveController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatistiqueController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Requests\Auth\VerifierCodeRequest;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +41,15 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+    Route::get('/connexion/verification', [AuthController::class, 'afficherFormulaireCode'])->name('verification.code');
+    Route::post('/connexion/verification', [AuthController::class, 'verifierCode'])->name('verification.code.verifier');
+    Route::post('/connexion/verification/renvoyer', [AuthController::class, 'renvoyerCode'])->name('verification.code.renvoyer');
+    Route::view('/mot-de-passe-oublie', 'auth.forgot-password')->name('password.request');
+    Route::post('/mot-de-passe-oublie', [ForgotPasswordController::class, 'envoyer'])->name('password.email');
+    Route::get('/reinitialiser-mot-de-passe/{token}', function (string $token) {
+        return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
+    })->name('password.reset');
+    Route::post('/reinitialiser-mot-de-passe', [ResetPasswordController::class, 'reset'])->name('password.update');
 
     // Traitement
     Route::post('/inscription', [AuthController::class, 'register'])->name('register.store');

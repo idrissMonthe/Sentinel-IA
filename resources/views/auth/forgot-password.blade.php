@@ -4,29 +4,31 @@
 
 @section('content')
 <div class="auth-container fade-in">
-    <div class="auth-card auth-card-centered">
-        <span class="auth-kicker">Accès sécurisé</span>
-        <h1 class="auth-title">Mot de passe oublié ?</h1>
-        <p class="auth-subtitle">Saisissez votre adresse email et nous vous enverrons un lien pour choisir un nouveau mot de passe.</p>
-
-        @if (session('status'))
-            <div class="alert-success">{{ session('status') }}</div>
-        @endif
+    <div class="auth-card">
+        <h2 class="auth-title">Mot de passe oublié</h2>
+        <p class="auth-subtitle">Recevez un lien pour réinitialiser votre mot de passe.</p>
 
         @if ($errors->any())
-            <div class="alert-error">{{ $errors->first() }}</div>
+            <div class="alert alert-danger">
+                @foreach ($errors->all() as $erreur)<p>{{ $erreur }}</p>@endforeach
+            </div>
+        @endif
+        @if (session('status'))
+            <div class="alert alert-success">{{ session('status') }}</div>
         @endif
 
         <form action="{{ route('password.email') }}" method="POST" class="auth-form">
             @csrf
             <div class="form-group">
-                <label for="email">Adresse email</label>
-                <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus placeholder="exemple@email.com">
+                <label for="email">Adresse Email</label>
+                <input type="email" id="email" name="email" value="{{ old('email') }}" required>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Envoyer le lien</button>
         </form>
 
-        <div class="auth-footer"><a href="{{ route('login') }}">← Retour à la connexion</a></div>
+        <div class="auth-footer">
+            <p><a href="{{ route('login') }}">Retour à la connexion</a></p>
+        </div>
     </div>
 </div>
 @endsection

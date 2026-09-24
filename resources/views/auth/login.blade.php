@@ -16,7 +16,7 @@ fill="currentColor" viewBox="0 0 24 24" >
         <form action="{{ route('login.store') }}" method="POST" class="auth-form">
             @csrf
 
-            <!-- Champ Email -->
+            
             <div class="form-group fade-in-element delay-2">
                 <label for="email">Adresse Email</label>
                 <!-- Utilisation de old() pour garder l'email en cas d'erreur de mot de passe -->
@@ -26,7 +26,9 @@ fill="currentColor" viewBox="0 0 24 24" >
             <div class="form-group fade-in-element delay-3">
                 <label for="password">Mot de passe</label>
                 <div class="password-input"><input type="password" id="password" name="password" required placeholder="Votre mot de passe"><button type="button" class="password-toggle" aria-label="Afficher le mot de passe" data-password-toggle="password">Afficher</button></div>
-                <a class="form-help-link" href="{{ route('password.request') }}">Mot de passe oublié ?</a>
+                <p style="text-align:right; margin-top:-10px; margin-bottom:15px;">
+                    <a href="{{ route('password.request') }}" style="color: var(--blue-shield); font-size: 0.85rem;">Mot de passe oublié ?</a>
+                </p>
             </div>
 
             <!-- Bouton de soumission -->

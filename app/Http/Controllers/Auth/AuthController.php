@@ -4,21 +4,23 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterUserRequest;
+use App\Http\Requests\Auth\VerifierCodeRequest;
+use App\Mail\BienvenueMail;
 use App\Models\User;
-use App\http\Requests\Auth\RegisterUserRequest;
-use App\http\Requests\Auth\LoginRequest;
+use App\Services\Auth\TwoFactorCodeService;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Correspond à l'alternative 2.1 : création de compte (Visiteur -> Utilisateur)
     public function register(RegisterUserRequest $request): RedirectResponse
     {
         $data = $request->validated();
@@ -28,53 +30,127 @@ class AuthController extends Controller
             'prenom' => $data['prenom'],
             'email' => $data['email'],
             'telephone' => $data['telephone'] ?? null,
-            'password' => $data['password'], // haché automatiquement (cast 'hashed' sur le modèle)
+            'password' => $data['password'],
             'role' => UserRole::UTILISATEUR,
         ]);
 
-        return redirect()->route('login')->with('status', 'Compte créé avec succès. Connectez-vous pour continuer.');
+        try {
+            Mail::to($user->email)->send(new BienvenueMail($user));
+        } catch (\Throwable $e) {
+            Log::warning('Échec envoi email de bienvenue (inscription classique).', ['erreur' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('login')
+            ->with(
+                'status',
+                'Compte créé avec succès. Connectez-vous pour continuer.'
+            );
     }
 
-    // Scénario nominal + exceptions 4.1, 5.1, 5.2 de la fiche "S'authentifier"
-    public function login(LoginRequest $request): RedirectResponse
-    {
-        // 4.1 : champs manquants -> géré automatiquement par validate()
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+    public function login(
+        LoginRequest $request,
+        TwoFactorCodeService $service
+    ): RedirectResponse {
+        $credentials = $request->validated();
 
         $user = User::where('email', $credentials['email'])->first();
 
-        // 5.2 : compte bloqué -> on vérifie AVANT de tenter l'authentification
         if ($user && $user->statut === 'bloque') {
             throw ValidationException::withMessages([
                 'email' => 'Votre compte est temporairement bloqué. Contactez un administrateur.',
-            ]);
+            ])->redirectTo(route('login'));
         }
 
-        if (! Auth::attempt($credentials)) {
-            // 5.1 : identifiants incorrects -> incrémenter le compteur, bloquer au seuil
+        if (! $user || ! Auth::validate($credentials)) {
             if ($user) {
                 $user->increment('tentatives_echouees');
+
                 if ($user->tentatives_echouees >= 5) {
-                    $user->update(['statut' => 'bloque']);
+                    $user->update([
+                        'statut' => 'bloque',
+                    ]);
                 }
             }
 
-            // Message générique volontairement imprécis (bonne pratique de sécurité,
-            // cf. remarque de la fiche : ne pas préciser lequel des deux champs est fautif)
             throw ValidationException::withMessages([
                 'email' => 'Identifiants incorrects.',
-            ]);
+            ])->redirectTo(route('login'));
         }
 
-        // Connexion réussie : réinitialiser le compteur
+        $request->session()->put('2fa_user_id', $user->id);
+
+        $service->genererEtEnvoyer($user);
+
+        return redirect()->route('verification.code');
+    }
+
+    public function afficherFormulaireCode(Request $request)
+    {
+        if (! $request->session()->has('2fa_user_id')) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.verification-code');
+    }
+
+    public function verifierCode(
+        VerifierCodeRequest $request,
+        TwoFactorCodeService $service
+    ): RedirectResponse {
+        $userId = $request->session()->get('2fa_user_id');
+
+        if (! $userId) {
+            return redirect()
+                ->route('login')
+                ->withErrors([
+                    'email' => 'Session expirée, reconnectez-vous.',
+                ]);
+        }
+
+        $user = User::find($userId);
+
+        if (
+            ! $user ||
+            ! $service->verifier($user, $request->validated('code'))
+        ) {
+            throw ValidationException::withMessages([
+                'code' => 'Code invalide ou expiré.',
+            ])->redirectTo(route('verification.code'));
+        }
+
+        Auth::login($user);
+
+        $request->session()->forget('2fa_user_id');
         $request->session()->regenerate();
-        $user = Auth::user();
-        $user->update(['tentatives_echouees' => 0]);
+
+        $user->update([
+            'tentatives_echouees' => 0,
+        ]);
 
         return redirect()->intended(route('accueil'));
+    }
+
+    public function renvoyerCode(
+        Request $request,
+        TwoFactorCodeService $service
+    ): RedirectResponse {
+        $userId = $request->session()->get('2fa_user_id');
+
+        if (! $userId) {
+            return redirect()->route('login');
+        }
+
+        $user = User::find($userId);
+
+        if ($user) {
+            $service->genererEtEnvoyer($user);
+        }
+
+        return back()->with(
+            'status',
+            'Un nouveau code vous a été envoyé.'
+        );
     }
 
     public function showForgotPasswordForm()
@@ -85,34 +161,58 @@ class AuthController extends Controller
     public function sendResetLink(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => ['required', 'email:rfc', 'regex:/^[^@\s]+@[^@\s]+\.[^@\s]+$/i'],
+            'email' => [
+                'required',
+                'email:rfc',
+                'regex:/^[^@\s]+@[^@\s]+\.[^@\s]+$/i',
+            ],
         ]);
 
-        // Réponse volontairement générique : elle ne révèle pas si l'adresse existe.
-        Password::sendResetLink($request->only('email'));
+        Password::sendResetLink(
+            $request->only('email')
+        );
 
-        return back()->with('status', 'Si cette adresse est associée à un compte, un lien de réinitialisation vient d’être envoyé.');
+        return back()->with(
+            'status',
+            'Si cette adresse est associée à un compte, un lien de réinitialisation vient d’être envoyé.'
+        );
     }
 
     public function showResetPasswordForm(string $token)
     {
-        return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
+        return view('auth.reset-password', [
+            'token' => $token,
+            'email' => request('email'),
+        ]);
     }
 
     public function resetPassword(Request $request): RedirectResponse
     {
         $request->validate([
             'token' => ['required'],
-            'email' => ['required', 'email:rfc', 'regex:/^[^@\s]+@[^@\s]+\.[^@\s]+$/i'],
-            'password' => ['required', 'confirmed', 'min:8'],
+            'email' => [
+                'required',
+                'email:rfc',
+                'regex:/^[^@\s]+@[^@\s]+\.[^@\s]+$/i',
+            ],
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+            ],
         ]);
 
         $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
+            $request->only(
+                'email',
+                'password',
+                'password_confirmation',
+                'token'
+            ),
             function (User $user, string $password) {
                 $user->forceFill([
                     'password' => $password,
-                    'remember_token' => Str::random(60),
+                    'remember_token' => str()->random(60),
                     'tentatives_echouees' => 0,
                 ])->save();
 
@@ -121,15 +221,25 @@ class AuthController extends Controller
         );
 
         if ($status === Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', 'Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.');
+            return redirect()
+                ->route('login')
+                ->with(
+                    'status',
+                    'Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.'
+                );
         }
 
-        return back()->withInput($request->only('email'))->withErrors(['email' => __($status)]);
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors([
+                'email' => __($status),
+            ]);
     }
 
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
