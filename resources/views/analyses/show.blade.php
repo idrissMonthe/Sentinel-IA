@@ -27,9 +27,6 @@
             <h2>Score de risque</h2>
             
             <!-- Affichage visuel du score (Couleur conditionnelle selon le danger) -->
-            @php
-                $scoreClass = $analyse->score_fiabilite > 70 ? 'danger' : ($analyse->score_fiabilite > 40 ? 'warning' : 'safe');
-            @endphp
             
             <div class="score-circle {{ $scoreClass }}">
                 <span class="score-number">{{ $analyse->score_fiabilite }}%</span>
@@ -50,15 +47,16 @@
                 <p>{{ $conseil }}</p>
             </div>
 
-            <div class="action-buttons">
+            <div class="action-buttons" style="display: flex; flex-direction: column; gap: 12px;">
+                <a href="{{ route('analyses.create') }}" class="btn btn-primary btn-block">Faire une autre analyse</a>
                 <!-- Lien pré-rempli vers la création d'un signalement (Cas A du cahier des charges) -->
-                @if((float) $analyse->score_fiabilite > 0)
+                @if($risqueEleve)
                     <a href="{{ route('signalements.create') . '?analyse_id=' . $analyse->id }}" class="btn btn-signal btn-block">
                         🚨 Signaler cette arnaque
                     </a>
                 @endif
 
-                <!-- Lien pour générer la vue imprimable -->
+                <a href="{{ route('profile.historique') }}" class="btn btn-secondary btn-block">Retour à mon historique</a>
             </div>
         </div>
     </div>

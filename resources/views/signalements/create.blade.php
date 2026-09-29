@@ -3,6 +3,12 @@
 @section('title', 'Signaler une arnaque - SENTINEL IA')
 
 @section('content')
+<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+    @if($analyseRetour ?? null)
+        <a href="{{ route('analyses.show', $analyseRetour) }}" class="btn btn-secondary">Retour au résultat de l’analyse</a>
+    @endif
+    <a href="{{ route('signalements.index') }}" class="btn btn-secondary">Retour à mes signalements</a>
+</div>
 <div class="analysis-container fade-in" style="max-width: 900px; margin: 0 auto; padding: 40px 20px;">
     
     <div class="analysis-header text-center" style="margin-bottom: 30px;">

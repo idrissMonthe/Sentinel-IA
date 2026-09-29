@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="analysis-container fade-in">
+    <a href="{{ route('accueil') }}" class="btn btn-secondary" style="margin-bottom: 20px;">Retour à l’accueil</a>
     <div class="analysis-header text-center">
         <h1 class="page-title">Détection IA</h1>
         <p class="text-secondary">Soumettez un texte, un numéro, un lien, un email ou une image suspecte. Notre IA évaluera son niveau de dangerosité.</p>

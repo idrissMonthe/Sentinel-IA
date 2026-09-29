@@ -24,9 +24,14 @@ class SignalementController extends Controller
         return view('signalements.index', compact('signalements'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('signalements.create');
+        $analyseId = $request->old('analyse_id', $request->query('analyse_id'));
+        $analyseRetour = is_scalar($analyseId) && ctype_digit((string) $analyseId)
+            ? $request->user()->analyses()->find($analyseId)
+            : null;
+
+        return view('signalements.create', compact('analyseRetour'));
     }
 
     // Scénario nominal de la fiche "Signaler une arnaque", alternatives 4.1 et 8.1.

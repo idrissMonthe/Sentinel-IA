@@ -4,6 +4,9 @@
 
 @section('content')
 <div class="container fade-in" style="max-width: 900px;">
+    @if(!Auth::user()->estModerateur())
+        <a href="{{ route('signalements.index') }}" class="btn btn-secondary" style="margin-bottom: 20px;">Retour à mes signalements</a>
+    @endif
     <div class="card" style="margin-bottom: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glow); padding-bottom: 15px; margin-bottom: 15px;">
             <h1 class="page-title" style="margin: 0; font-size: 1.8rem;">Dossier du {{ $signalement->created_at->format('d/m/Y à H:i') }}</h1>
