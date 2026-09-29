@@ -159,6 +159,8 @@ Route::middleware('auth')->prefix('admin/utilisateurs')->name('admin.utilisateur
     Route::delete('/{user}', [UtilisateurController::class, 'destroy'])->name('destroy');
 });
 
+Route::middleware('auth')->get('/admin/consommation-ia', [\App\Http\Controllers\Admin\ConsommationIAController::class, 'index'])->name('admin.consommation-ia');
+
 // Toute adresse inconnue affiche la page 404 de l'application.
 Route::fallback(function () {
     return response()->view('errors.404', status: 404);

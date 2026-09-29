@@ -18,7 +18,7 @@
                 <label for="type">Que souhaitez-vous analyser ?</label>
                 <select id="type" name="type" required class="form-control">
                     <option value="texte" {{ old('type') == 'texte' ? 'selected' : '' }}>Texte (SMS, Message, etc.)</option>
-                    <option value="lien" {{ old('type') == 'lien' ? 'selected' : '' }}>Lien / URL</option>
+                    <option value="lien" {{ old('type') == 'lien' ? 'selected' : '' }}>Site web / domaine / URL</option>
                     <option value="numero" {{ old('type') == 'numero' ? 'selected' : '' }}>Numéro de téléphone</option>
                     <option value="email" {{ old('type') == 'email' ? 'selected' : '' }}>Adresse Email</option>
                     <option value="image" {{ old('type') == 'image' ? 'selected' : '' }}>Image (Capture d'écran)</option>
@@ -34,7 +34,7 @@
             <!-- Champ fichier (masqué par défaut) -->
             <div class="form-group" id="fichier-group" style="display: none;">
                 <label for="fichier">Importer une image</label>
-                <input type="file" id="fichier" name="fichier" accept="image/*" class="form-control">
+                <input type="file" id="fichier" name="fichier" accept="image/jpeg,image/png" class="form-control">
                 <small class="text-secondary">Formats acceptés : JPG, PNG, JPEG.</small>
             </div>
 
@@ -53,6 +53,11 @@
         const fichierGroup = document.getElementById('fichier-group');
 
         function toggleFields() {
+            const image = typeSelect.value === 'image';
+            document.getElementById('contenu').disabled = image;
+            document.getElementById('contenu').required = !image;
+            document.getElementById('fichier').disabled = !image;
+            document.getElementById('fichier').required = image;
             if (typeSelect.value === 'image') {
                 contenuGroup.style.display = 'none';
                 fichierGroup.style.display = 'block';

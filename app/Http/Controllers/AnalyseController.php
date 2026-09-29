@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Analyse;
 use App\Http\Requests\StoreAnalyseRequest;
-use App\Services\Analyse\AnalyseIAService;
+use App\Models\Analyse;
 use App\Services\Analyse\AnalyseIAIndisponibleException;
+use App\Services\Analyse\AnalyseIAService;
 use App\Services\Analyse\ContenuLienFetcher;
 use App\Services\Analyse\QuotaAnalyseService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class AnalyseController extends Controller
 {
@@ -17,10 +16,7 @@ class AnalyseController extends Controller
         private AnalyseIAService $analyseIAService,
         private QuotaAnalyseService $quotaService,
         private ContenuLienFetcher $contenuLienFetcher,
-    )
-    {
-       
-    }
+    ) {}
 
     public function create()
     {
@@ -31,26 +27,28 @@ class AnalyseController extends Controller
     public function store(StoreAnalyseRequest $request): RedirectResponse
     {
         $data = $request->validated();
-         if ($this->quotaService->quotaAtteint($request->user())) {
-        return back()->withErrors([
-            'type' => "Quota quotidien d'analyses IA atteint. Réessayez demain.",
-        ]);
-    }
+        if ($this->quotaService->quotaAtteint($request->user())) {
+            return back()->withErrors([
+                'type' => "Quota quotidien d'analyses IA atteint. Réessayez demain.",
+            ]);
+        }
 
-        // Si image : le service se charge en interne du passage par le Module OCR
-        // avant d'appeler l'IA (chaîne include Extraire le texte -> Envoyer à l'IA)
+        // L’image validée est envoyée directement à la vision de Claude.
         $contenu = $data['type'] === 'image'
             ? $request->file('fichier')->path()
             : $data['contenu'];
 
+        $sourceWeb = null;
         if ($data['type'] === 'lien') {
             $contenuRecupere = $this->contenuLienFetcher->recuperer($contenu);
-            if ($contenuRecupere !== null) {
-                // L'URL initiale reste utile à l'IA pour détecter les signaux de domaine.
-                $contenu = "URL soumise : {$contenu}\n\n{$contenuRecupere}";
+            if ($contenuRecupere === null) {
+                return back()->withInput()->withErrors([
+                    'contenu' => 'Le contenu de cette page n’a pas pu être récupéré. Vérifiez le domaine ou l’URL ; si le site bloque l’accès ou nécessite JavaScript, envoyez une capture d’écran ou copiez son texte. Aucune analyse IA n’a été facturée.',
+                ]);
             }
+            $sourceWeb = $this->contenuLienFetcher->source();
+            $contenu = "URL soumise : {$contenu}\n\n{$contenuRecupere}";
         }
-
         try {
             [$score, $conclusion] = $this->analyseIAService->analyser($data['type'], $contenu);
         } catch (AnalyseIAIndisponibleException) {
@@ -64,6 +62,7 @@ class AnalyseController extends Controller
         // mettreAJourScore() est appliqué ici, au retour de l'appel IA
         $analyse = $request->user()->analyses()->create([
             'type' => $data['type'],
+            'source_web' => $sourceWeb,
             'date_analyse' => now(),
             'score_fiabilite' => $score,
             'conclusion' => $conclusion,
@@ -88,5 +87,4 @@ class AnalyseController extends Controller
 
         return view('analyses.show', compact('analyse', 'conseil'));
     }
-
 }

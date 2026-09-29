@@ -9,10 +9,22 @@
         <p class="text-secondary">Analyse effectuée le {{ $analyse->date_analyse->format('d/m/Y à H:i') }}</p>
     </div>
 
+    @if($analyse->source_web)
+        <div class="conseil-box">
+            <strong>Source utilisée :</strong> {{ $analyse->source_web['url_finale'] }}
+            <p>Page récupérée et texte transmis à Claude ({{ $analyse->source_web['caracteres'] }} caractères).
+            L’analyse porte sur cette page, sans exécuter JavaScript ni parcourir tout le site.</p>
+        </div>
+    @elseif($analyse->type === 'image')
+        <p class="text-secondary">Analyse des éléments visibles de la capture par Claude.</p>
+    @elseif($analyse->type === 'lien')
+        <p class="text-secondary">Ancienne analyse : la récupération du contenu de la page n’a pas été enregistrée.</p>
+    @endif
+
     <div class="result-grid">
         <!-- Carte principale avec le score -->
         <div class="result-card main-score fade-in-element delay-1">
-            <h2>Score de fiabilité</h2>
+            <h2>Score de risque</h2>
             
             <!-- Affichage visuel du score (Couleur conditionnelle selon le danger) -->
             @php

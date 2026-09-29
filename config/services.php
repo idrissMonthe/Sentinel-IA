@@ -34,19 +34,23 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    'openai' => [
-        'api_key' => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-5-mini'),
-        'timeout' => (int) env('OPENAI_TIMEOUT', 15),
+    'anthropic' => [
+        'prompt_caching' => env('ANTHROPIC_PROMPT_CACHING', true),
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'workspace_id' => env('ANTHROPIC_WORKSPACE_ID'),
+        'ca_bundle' => env('ANTHROPIC_CA_BUNDLE'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001'),
+        'max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 1024),
+        'timeout' => (int) env('ANTHROPIC_TIMEOUT', 60),
         // Deux tentatives au total : une relance limitée évite de multiplier les coûts.
-        'retry_attempts' => (int) env('OPENAI_RETRY_ATTEMPTS', 2),
-        'retry_delay_ms' => (int) env('OPENAI_RETRY_DELAY_MS', 250),
+        'retry_attempts' => (int) env('ANTHROPIC_RETRY_ATTEMPTS', 2),
+        'retry_delay_ms' => (int) env('ANTHROPIC_RETRY_DELAY_MS', 250),
     ],
-    
+
     'google' => [
-    'client_id' => env('GOOGLE_CLIENT_ID'),
-    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-    'redirect' => env('GOOGLE_REDIRECT_URI'),
-],
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
 
 ];

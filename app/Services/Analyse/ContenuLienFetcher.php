@@ -2,135 +2,162 @@
 
 namespace App\Services\Analyse;
 
+use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\UriResolver;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ContenuLienFetcher
 {
     private const TAILLE_MAX_OCTETS = 500_000;
-    private const TIMEOUT_SECONDES = 8;
+
+    private const TEXTE_MAX_CARACTERES = 8000;
+
+    private ?array $source = null;
+
+    public function source(): ?array
+    {
+        return $this->source;
+    }
 
     public function recuperer(string $url): ?string
     {
-        if (! $this->urlEstSure($url)) {
-            return null;
+        $this->source = null;
+        $url = trim($url);
+        if (parse_url($url, PHP_URL_SCHEME) === null) {
+            $url = 'https://'.ltrim($url, '/');
         }
-
         try {
-            $reponse = $this->suivreRedirectionsSures($url);
+            $courante = $url;
+            for ($redirections = 0; $redirections <= 3; $redirections++) {
+                $options = $this->optionsSures($courante);
+                if ($options === null) {
+                    return null;
+                }
+                $reponse = Http::withHeaders(['User-Agent' => 'SentinelIABot/1.0', 'Accept' => 'text/html, text/plain'])
+                    ->withOptions($options + [
+                        'verify' => config('sentinel_ia.web_ca_bundle') ?: true,
+                        'on_headers' => function ($response) {
+                            if ((int) $response->getHeaderLine('Content-Length') > self::TAILLE_MAX_OCTETS) {
+                                throw new \RuntimeException('Page trop volumineuse.');
+                            }
+                        },
+                        'progress' => function ($total, $downloaded) {
+                            if ($downloaded > self::TAILLE_MAX_OCTETS) {
+                                throw new \RuntimeException('Page trop volumineuse.');
+                            }
+                        },
+                    ])->connectTimeout(5)->timeout(12)->withoutRedirecting()->get($courante);
 
-            if ($reponse === null || $reponse->failed()) {
-                return null;
+                if ($reponse->redirect()) {
+                    if (blank($reponse->header('Location')) || $redirections === 3) {
+                        return null;
+                    }
+                    $courante = (string) UriResolver::resolve(new Uri($courante), new Uri($reponse->header('Location')));
+
+                    continue;
+                }
+                if ($reponse->failed() || (int) $reponse->header('Content-Length') > self::TAILLE_MAX_OCTETS || strlen($reponse->body()) > self::TAILLE_MAX_OCTETS) {
+                    return null;
+                }
+                $mime = strtolower(explode(';', $reponse->header('Content-Type'))[0]);
+                if (! in_array($mime, ['', 'text/html', 'application/xhtml+xml', 'text/plain'], true)) {
+                    return null;
+                }
+                $texte = $this->extraireTexteUtile($reponse->body(), $mime === 'text/plain');
+                if ($texte === null) {
+                    return null;
+                }
+                $this->source = ['url' => $url, 'url_finale' => $courante, 'caracteres' => mb_strlen($texte), 'limite_caracteres' => self::TEXTE_MAX_CARACTERES];
+
+                return "Page effectivement récupérée : {$courante}\n{$texte}";
             }
-
-            $tailleAnnonce = (int) $reponse->header('Content-Length', 0);
-            if ($tailleAnnonce > self::TAILLE_MAX_OCTETS) {
-                return null;
-            }
-
-            return $this->extraireTexteUtile(substr($reponse->body(), 0, self::TAILLE_MAX_OCTETS));
         } catch (\Throwable $e) {
-            Log::warning('Échec de récupération du lien à analyser.', ['url' => $url, 'erreur' => $e->getMessage()]);
-
-            return null;
-        }
-    }
-
-    private function suivreRedirectionsSures(string $url): ?\Illuminate\Http\Client\Response
-    {
-        $urlCourante = $url;
-
-        for ($redirections = 0; $redirections <= 3; $redirections++) {
-            // Chaque cible est contrôlée : une redirection ne doit pas contourner la protection SSRF.
-            if (! $this->urlEstSure($urlCourante)) {
-                return null;
-            }
-
-            $reponse = Http::withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (compatible; SentinelIABot/1.0)',
-                ])
-                ->timeout(self::TIMEOUT_SECONDES)
-                ->withoutRedirecting()
-                ->get($urlCourante);
-
-            if (! $reponse->redirect()) {
-                return $reponse;
-            }
-
-            $destination = $reponse->header('Location');
-            if (blank($destination) || $redirections === 3) {
-                return null;
-            }
-
-            $urlCourante = $this->resoudreRedirection($urlCourante, $destination);
+            // Ne pas conserver les paramètres d'URL, qui peuvent être confidentiels.
+            Log::warning('Échec de récupération du lien à analyser.', ['host' => parse_url($url, PHP_URL_HOST), 'classe' => $e::class]);
         }
 
         return null;
     }
 
-    private function resoudreRedirection(string $urlSource, string $destination): string
+    private function optionsSures(string $url): ?array
     {
-        if (parse_url($destination, PHP_URL_SCHEME) !== null) {
-            return $destination;
+        $parts = parse_url($url);
+        if (! $parts || ! in_array($parts['scheme'] ?? '', ['http', 'https'], true) || empty($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
+            return null;
         }
-
-        $source = parse_url($urlSource);
-        $autorite = ($source['scheme'] ?? 'https').'://'.($source['host'] ?? '');
-        if (isset($source['port'])) {
-            $autorite .= ':'.$source['port'];
+        $host = trim($parts['host'], '[]');
+        $port = $parts['port'] ?? ($parts['scheme'] === 'https' ? 443 : 80);
+        if (! in_array($port, [80, 443], true)) {
+            return null;
         }
-
-        if (str_starts_with($destination, '//')) {
-            return ($source['scheme'] ?? 'https').':'.$destination;
+        $literal = filter_var($host, FILTER_VALIDATE_IP);
+        $ips = $literal ? [$host] : gethostbynamel($host);
+        if (! $ips) {
+            return null;
         }
-
-        if (str_starts_with($destination, '/')) {
-            return $autorite.$destination;
-        }
-
-        $repertoire = rtrim(dirname($source['path'] ?? '/'), '/');
-
-        return $autorite.($repertoire === '' ? '/' : $repertoire.'/').$destination;
-    }
-
-    private function urlEstSure(string $url): bool
-    {
-        $parties = parse_url($url);
-
-        if (! $parties || ! in_array($parties['scheme'] ?? '', ['http', 'https'], true) || empty($parties['host'])) {
-            return false;
-        }
-
-        $host = $parties['host'];
-        $ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : gethostbyname($host);
-
-        // Bloque localhost, réseaux privés (10.x, 192.168.x, etc.) et réservés :
-        // protection SSRF indispensable puisque l'URL vient de l'utilisateur.
-        return (bool) filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-    }
-
-    private function extraireTexteUtile(string $html): string
-    {
-        libxml_use_internal_errors(true);
-        $doc = new \DOMDocument();
-        $doc->loadHTML($html);
-        libxml_clear_errors();
-
-        $titre = $doc->getElementsByTagName('title')->item(0)?->textContent ?? '(absent)';
-
-        $metaDescription = '(absente)';
-        foreach ($doc->getElementsByTagName('meta') as $meta) {
-            if (strtolower($meta->getAttribute('name')) === 'description') {
-                $metaDescription = $meta->getAttribute('content');
-                break;
+        foreach ($ips as $ip) {
+            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return null;
             }
         }
+        // Fixer l'IP contrôlée évite une nouvelle résolution DNS entre contrôle et connexion.
+        if (! $literal) {
+            if (! defined('CURLOPT_RESOLVE')) {
+                return null;
+            }
 
-        $nombreFormulaires = $doc->getElementsByTagName('form')->length;
+            return ['curl' => [CURLOPT_RESOLVE => ["{$host}:{$port}:{$ips[0]}"]]];
+        }
 
-        $corps = preg_replace('/\s+/', ' ', trim(strip_tags($html)));
-        $corps = mb_substr($corps, 0, 3000); // limite pour ne pas saturer le prompt IA
+        return [];
+    }
 
-        return "Titre de la page : {$titre}\nDescription meta : {$metaDescription}\nNombre de formulaires présents : {$nombreFormulaires}\nExtrait du contenu textuel visible :\n{$corps}";
+    private function extraireTexteUtile(string $html, bool $plain): ?string
+    {
+        if (trim($html) === '') {
+            return null;
+        }
+        $titre = '';
+        $description = '';
+        $formulaires = 0;
+        if ($plain) {
+            $body = $html;
+        } else {
+            $previous = libxml_use_internal_errors(true);
+            try {
+                $doc = new \DOMDocument;
+                $doc->loadHTML('<?xml encoding="UTF-8">'.$html, LIBXML_NONET);
+                $xpath = new \DOMXPath($doc);
+                $titre = $doc->getElementsByTagName('title')->item(0)?->textContent ?? '';
+                foreach ($doc->getElementsByTagName('meta') as $meta) {
+                    if (strtolower($meta->getAttribute('name')) === 'description') {
+                        $description = $meta->getAttribute('content');
+                        break;
+                    }
+                }
+                $formulaires = $doc->getElementsByTagName('form')->length;
+                foreach ($xpath->query('//script|//style|//noscript|//template|//*[@hidden]|//*[@aria-hidden="true"]') as $node) {
+                    $node->parentNode?->removeChild($node);
+                }
+                // Préserver les séparations entre paragraphes et cellules du HTML.
+                foreach ($xpath->query('//p|//div|//li|//br|//h1|//h2|//h3|//td') as $node) {
+                    $node->appendChild($doc->createTextNode(' '));
+                }
+                $body = $doc->getElementsByTagName('body')->item(0)?->textContent ?? '';
+            } finally {
+                libxml_clear_errors();
+                libxml_use_internal_errors($previous);
+            }
+        }
+        $body = trim(preg_replace('/\s+/u', ' ', $body) ?? '');
+        if ($body === '') {
+            return null;
+        }
+        $excerpt = mb_substr($body, 0, self::TEXTE_MAX_CARACTERES);
+
+        return 'Titre : '.mb_substr($titre, 0, 300)."\nDescription : ".mb_substr($description, 0, 600)
+            ."\nFormulaires : {$formulaires}\nTexte extrait du HTML (JavaScript non exécuté) :\n{$excerpt}"
+            .(mb_strlen($body) > self::TEXTE_MAX_CARACTERES ? "\n[Extrait tronqué]" : '');
     }
 }

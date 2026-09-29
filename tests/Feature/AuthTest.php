@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Mail\CodeVerificationMail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -41,6 +43,7 @@ class AuthTest extends TestCase
 
     public function test_connexion_avec_bons_identifiants_reussit(): void
     {
+        Mail::fake();
         $user = User::factory()->create(['password' => 'motdepasse123']);
 
         $reponse = $this->post('/connexion', [
@@ -48,7 +51,12 @@ class AuthTest extends TestCase
             'password' => 'motdepasse123',
         ]);
 
-        $reponse->assertRedirect(route('accueil'));
+        $reponse->assertRedirect(route('verification.code'));
+        $this->assertGuest();
+        $reponse->assertSessionHas('2fa_user_id', $user->id);
+        Mail::assertSent(CodeVerificationMail::class);
+        $this->post(route('verification.code.verifier'), ['code' => $user->fresh()->code_2fa])
+            ->assertRedirect(route('accueil'));
         $this->assertAuthenticatedAs($user);
     }
 
@@ -70,6 +78,7 @@ class AuthTest extends TestCase
 
     public function test_5_tentatives_echouees_bloquent_automatiquement_le_compte(): void
     {
+        Mail::fake();
         $user = User::factory()->create(['password' => 'motdepasse123']);
 
         for ($i = 0; $i < 5; $i++) {

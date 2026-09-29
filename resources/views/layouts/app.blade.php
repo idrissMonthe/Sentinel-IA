@@ -50,6 +50,7 @@
                                 @endif
                                 @if(Auth::user()->estAdministrateur())
                                     <a href="{{ route('admin.utilisateurs.index') }}" class="nav-link admin-link">Administration</a>
+                                    <a href="{{ route('admin.consommation-ia') }}" class="nav-link admin-link">Consommation IA</a>
                                 @endif
                                 @if(!Auth::user()->estModerateur() && !Auth::user()->estAdministrateur())
                                     <span class="nav-dropdown-empty">Espace personnel</span>

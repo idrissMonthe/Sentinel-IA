@@ -6,11 +6,27 @@ use App\Models\Analyse;
 use App\Models\User;
 use App\Services\Analyse\QuotaAnalyseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AnalyseAccessAndQuotaTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_successful_analysis_uses_claude_and_persists_the_result(): void
+    {
+        config(['services.anthropic.api_key' => 'test-key']);
+        Http::preventStrayRequests();
+        Http::fake(['api.anthropic.com/*' => Http::response([
+            'stop_reason' => 'end_turn',
+            'content' => [['type' => 'text', 'text' => '{"score_fiabilite":75,"conclusion":"Ne partagez pas votre code PIN."}']],
+        ])]);
+        $user = User::factory()->create();
+        $this->actingAs($user)->post(route('analyses.store'), ['type' => 'texte', 'contenu' => 'Partagez votre code PIN.'])
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseHas('analyses', ['user_id' => $user->id, 'score_fiabilite' => 75, 'api_appel_effectue' => true]);
+        Http::assertSentCount(1);
+    }
 
     public function test_user_cannot_view_another_users_analysis(): void
     {
@@ -50,9 +66,9 @@ class AnalyseAccessAndQuotaTest extends TestCase
             ->assertSessionHasErrors('type');
     }
 
-    public function test_unavailable_openai_returns_a_clear_error_without_creating_an_analysis(): void
+    public function test_unavailable_claude_returns_a_clear_error_without_creating_an_analysis(): void
     {
-        config(['services.openai.api_key' => null]);
+        config(['services.anthropic.api_key' => null]);
         $user = User::factory()->create();
 
         $this->actingAs($user)

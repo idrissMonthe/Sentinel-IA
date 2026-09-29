@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Statistique extends Model
 {
     public $timestamps = false;
-      protected $fillable = [
+
+    protected $fillable = [
         'date_derniere_mise_a_jour',
         'total_signalement_actifs',
         'total_entites_bannies',
@@ -17,7 +18,7 @@ class Statistique extends Model
         'zones_touchees',
     ];
 
-     protected function casts(): array
+    protected function casts(): array
     {
         return [
             'date_derniere_mise_a_jour' => 'datetime',
@@ -26,27 +27,27 @@ class Statistique extends Model
         ];
     }
 
-       public static function recalculer(): self
+    public static function recalculer(): self
     {
-        $topMenaces = \App\Models\EntiteSuspecte::select('type')
+        $topMenaces = EntiteSuspecte::whereHas('signalements', fn ($query) => $query->where('statut', 'valide'))
+            ->select('type')
             ->selectRaw('count(*) as total')
             ->groupBy('type')->orderByDesc('total')->limit(5)->get()
             ->map(fn ($l) => ['label' => ucfirst($l->type), 'total' => $l->total]);
 
-        $topZones = \App\Models\Signalement::whereNotNull('ville')
+        $topZones = Signalement::where('statut', 'valide')->whereNotNull('ville')->where('ville', '<>', '')
             ->select('ville')->selectRaw('count(*) as total')
             ->groupBy('ville')->orderByDesc('total')->limit(5)->get()
             ->map(fn ($l) => ['label' => $l->ville, 'total' => $l->total]);
 
         return self::create([
             'date_derniere_mise_a_jour' => now(),
-            'total_signalement_actifs' => \App\Models\Signalement::where('statut', 'valide')->count(),
-            'total_entites_bannies' => \App\Models\EntiteSuspecte::where('nombre_signalement', '>=', 5)->count(),
-            'analyses_effectuees' => \App\Models\Analyse::count(),
-            'utilisateurs_proteges' => \App\Models\User::whereHas('signalements')->orWhereHas('analyses')->count(),
+            'total_signalement_actifs' => Signalement::where('statut', 'valide')->count(),
+            'total_entites_bannies' => EntiteSuspecte::where('nombre_signalement', '>=', 5)->count(),
+            'analyses_effectuees' => Analyse::count(),
+            'utilisateurs_proteges' => User::whereHas('signalements')->orWhereHas('analyses')->count(),
             'menaces_frequentes' => $topMenaces,
             'zones_touchees' => $topZones,
         ]);
     }
-
 }

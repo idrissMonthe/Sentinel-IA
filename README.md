@@ -1,3 +1,6 @@
+# Sentinel IA
+
+L'intégration IA utilise **Claude Haiku 4.5 (Anthropic)**. Consultez [la configuration Claude, le diagnostic et la création d'un administrateur](docs/claude.md).
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
