@@ -12,4 +12,7 @@ return [
     'quota_analyses_jour' => env('SENTINEL_IA_QUOTA_ANALYSES_JOUR', 5),
     'seuil_risque_eleve' => $seuilEleve,
     'seuil_risque_modere' => min($seuilModere, $seuilEleve),
+    'seuil_signalement' => filter_var(env('SENTINEL_IA_SEUIL_SIGNALEMENT', 60), FILTER_VALIDATE_INT, [
+        'options' => ['default' => 60, 'min_range' => 0, 'max_range' => 100],
+    ]),
 ];

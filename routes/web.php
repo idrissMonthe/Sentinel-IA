@@ -41,9 +41,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
-    Route::get('/connexion/verification', [AuthController::class, 'afficherFormulaireCode'])->name('verification.code');
-    Route::post('/connexion/verification', [AuthController::class, 'verifierCode'])->name('verification.code.verifier');
-    Route::post('/connexion/verification/renvoyer', [AuthController::class, 'renvoyerCode'])->name('verification.code.renvoyer');
+    Route::get('/inscription/verification', [AuthController::class, 'afficherFormulaireCode'])->name('registration.verification');
+    Route::post('/inscription/verification', [AuthController::class, 'verifierCode'])->name('registration.verification.verify');
+    Route::post('/inscription/verification/renvoyer', [AuthController::class, 'renvoyerCode'])->name('registration.verification.resend');
     Route::view('/mot-de-passe-oublie', 'auth.forgot-password')->name('password.request');
     Route::post('/mot-de-passe-oublie', [ForgotPasswordController::class, 'envoyer'])->name('password.email');
     Route::get('/reinitialiser-mot-de-passe/{token}', function (string $token) {

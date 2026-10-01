@@ -80,6 +80,7 @@ class AnalyseController extends Controller
         // afficher des conseils : <<extend>> de Analyser un contenu, calculé simplement
         // à partir du score plutôt que par un nouvel appel IA (aucun coût supplémentaire)
         $risqueEleve = (float) $analyse->score_fiabilite >= config('sentinel_ia.seuil_risque_eleve', 70);
+        $signalementAutorise = (float) $analyse->score_fiabilite >= config('sentinel_ia.seuil_signalement', 60);
         $risqueModere = (float) $analyse->score_fiabilite >= config('sentinel_ia.seuil_risque_modere', 40);
         $scoreClass = $risqueEleve ? 'danger' : ($risqueModere ? 'warning' : 'safe');
 
@@ -89,6 +90,6 @@ class AnalyseController extends Controller
             default => 'Aucun indice fort détecté, restez tout de même prudent.',
         };
 
-        return view('analyses.show', compact('analyse', 'conseil', 'risqueEleve', 'scoreClass'));
+        return view('analyses.show', compact('analyse', 'conseil', 'risqueEleve', 'signalementAutorise', 'scoreClass'));
     }
 }

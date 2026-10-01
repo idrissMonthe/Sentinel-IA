@@ -50,7 +50,7 @@
             <div class="action-buttons" style="display: flex; flex-direction: column; gap: 12px;">
                 <a href="{{ route('analyses.create') }}" class="btn btn-primary btn-block">Faire une autre analyse</a>
                 <!-- Lien pré-rempli vers la création d'un signalement (Cas A du cahier des charges) -->
-                @if($risqueEleve)
+                @if($signalementAutorise)
                     <a href="{{ route('signalements.create') . '?analyse_id=' . $analyse->id }}" class="btn btn-signal btn-block">
                         🚨 Signaler cette arnaque
                     </a>

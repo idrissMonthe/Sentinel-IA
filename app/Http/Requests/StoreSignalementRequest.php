@@ -12,10 +12,13 @@ class StoreSignalementRequest extends FormRequest
         return false;
     }
 
-    if ($this->filled('analyse_id')) {
-        return \App\Models\Analyse::where('id', $this->input('analyse_id'))
+        if ($this->filled('analyse_id')) {
+            $analyse = \App\Models\Analyse::where('id', $this->input('analyse_id'))
             ->where('user_id', $this->user()->id)
-            ->exists();
+            ->first();
+
+            return $analyse
+                && (float) $analyse->score_fiabilite >= config('sentinel_ia.seuil_signalement', 60);
     }
 
     return true;

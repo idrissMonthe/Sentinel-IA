@@ -35,13 +35,16 @@ class AuthController extends Controller
         ]);
 
         try {
-            Mail::to($user->email)->send(new BienvenueMail($user));
+            // Le mail de bienvenue est envoyé après la vérification du code.
         } catch (\Throwable $e) {
             Log::warning('Échec envoi email de bienvenue (inscription classique).', ['erreur' => $e->getMessage()]);
         }
 
+        $request->session()->put('registration_2fa_user_id', $user->id);
+        app(TwoFactorCodeService::class)->genererEtEnvoyer($user);
+
         return redirect()
-            ->route('login')
+            ->route('registration.verification')
             ->with(
                 'status',
                 'Compte créé avec succès. Connectez-vous pour continuer.'
@@ -78,17 +81,16 @@ class AuthController extends Controller
             ])->redirectTo(route('login'));
         }
 
-        $request->session()->put('2fa_user_id', $user->id);
+        Auth::login($user);
+        $request->session()->regenerate();
 
-        $service->genererEtEnvoyer($user);
-
-        return redirect()->route('verification.code');
+        return redirect()->intended(route('accueil'));
     }
 
     public function afficherFormulaireCode(Request $request)
     {
-        if (! $request->session()->has('2fa_user_id')) {
-            return redirect()->route('login');
+        if (! $request->session()->has('registration_2fa_user_id')) {
+            return redirect()->route('register');
         }
 
         return view('auth.verification-code');
@@ -98,7 +100,7 @@ class AuthController extends Controller
         VerifierCodeRequest $request,
         TwoFactorCodeService $service
     ): RedirectResponse {
-        $userId = $request->session()->get('2fa_user_id');
+        $userId = $request->session()->get('registration_2fa_user_id');
 
         if (! $userId) {
             return redirect()
@@ -116,29 +118,36 @@ class AuthController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'code' => 'Code invalide ou expiré.',
-            ])->redirectTo(route('verification.code'));
+            ])->redirectTo(route('registration.verification'));
         }
 
-        Auth::login($user);
-
-        $request->session()->forget('2fa_user_id');
+        $request->session()->forget('registration_2fa_user_id');
         $request->session()->regenerate();
 
         $user->update([
             'tentatives_echouees' => 0,
         ]);
 
-        return redirect()->intended(route('accueil'));
+        try {
+            Mail::to($user->email)->send(new BienvenueMail($user));
+        } catch (\Throwable $e) {
+            Log::warning('Échec envoi email de bienvenue après vérification.', ['erreur' => $e->getMessage()]);
+        }
+
+        return redirect()->route('login')->with(
+            'status',
+            'Compte créé et adresse e-mail vérifiée. Connectez-vous pour continuer.'
+        );
     }
 
     public function renvoyerCode(
         Request $request,
         TwoFactorCodeService $service
     ): RedirectResponse {
-        $userId = $request->session()->get('2fa_user_id');
+        $userId = $request->session()->get('registration_2fa_user_id');
 
         if (! $userId) {
-            return redirect()->route('login');
+            return redirect()->route('register');
         }
 
         $user = User::find($userId);

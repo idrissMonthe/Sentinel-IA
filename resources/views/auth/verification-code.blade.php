@@ -20,7 +20,7 @@
             <div class="alert alert-success">{{ session('status') }}</div>
         @endif
 
-        <form action="{{ route('verification.code.verifier') }}" method="POST" class="auth-form">
+        <form action="{{ route('registration.verification.verify') }}" method="POST" class="auth-form">
             @csrf
             <div class="form-group">
                 <label for="code">Code de vérification</label>
@@ -29,7 +29,7 @@
             <button type="submit" class="btn btn-primary btn-block">Vérifier</button>
         </form>
 
-        <form action="{{ route('verification.code.renvoyer') }}" method="POST" style="margin-top: 15px; text-align:center;">
+        <form action="{{ route('registration.verification.resend') }}" method="POST" style="margin-top: 15px; text-align:center;">
             @csrf
             <button type="submit" class="btn" style="background:transparent; color: var(--blue-shield); text-decoration: underline; border:none;">Renvoyer le code</button>
         </form>
