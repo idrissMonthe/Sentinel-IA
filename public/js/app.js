@@ -260,22 +260,22 @@ function initAiLoadingScreen() {
         overlay.setAttribute('aria-hidden', 'true');
         overlay.innerHTML = `
             <div class="sentinel-loading-backdrop"></div>
-            <div class="sentinel-loading-modal">
+            <div class="sentinel-loading-modal" role="status" aria-live="polite" aria-labelledby="sentinelLoadingTitle">
                 <div class="sentinel-loader-icon">
                     <div class="sentinel-spinner-ring"></div>
                     <div class="sentinel-spinner-core"></div>
                 </div>
                 <div class="sentinel-loading-header">
                     <span class="sentinel-loading-badge">Traitement Sécurisé</span>
-                    <h3 class="sentinel-loading-title">Analyse Sentinel IA en cours</h3>
+                    <h3 class="sentinel-loading-title" id="sentinelLoadingTitle">Analyse Sentinel IA en cours</h3>
                 </div>
                 <div class="sentinel-loading-bar-wrap">
                     <div class="sentinel-loading-bar-fill" id="sentinelLoadingBar"></div>
                 </div>
                 <p class="sentinel-loading-status" id="sentinelLoadingStatus">Initialisation du modèle d'analyse...</p>
-                <div class="sentinel-loading-meta">
-                    <span>Vérification Heuristique</span>
-                    <span>Base Nationale</span>
+            <div class="sentinel-loading-meta">
+                    <span>Analyse en cours</span>
+                    <span>Veuillez patienter</span>
                 </div>
             </div>
         `;

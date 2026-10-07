@@ -73,6 +73,7 @@ Route::middleware('auth')->prefix('profil')->name('profile.')->group(function ()
 
 Route::view('/mentions-legales', 'legal.mentions')->name('legal.mentions');
 Route::view('/confidentialite', 'legal.confidentialite')->name('legal.confidentialite');
+Route::view('/comment-ca-marche', 'pages.comment-ca-marche')->name('how-it-works');
 
 /*
 |--------------------------------------------------------------------------

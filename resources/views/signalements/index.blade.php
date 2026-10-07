@@ -23,9 +23,12 @@
                 <a href="{{ route('signalements.show', $signalement) }}" class="btn btn-secondary" style="border: 1px solid var(--border-glow); width: 100%; text-align: center; margin-top: 15px;">Voir le dossier</a>
             </div>
         @empty
-            <div class="card" style="grid-column: 1 / -1; text-align: center;">
-                <p>Vous n'avez soumis aucun signalement.</p>
-            </div>
+            @include('components.empty-state', [
+                'id' => 'reports-empty-title', 'icon' => '◌',
+                'title' => 'Aucun signalement pour le moment',
+                'message' => 'Votre espace est prêt. Si vous rencontrez une tentative de fraude, vous pourrez la documenter ici.',
+                'actionUrl' => route('signalements.create'), 'actionLabel' => 'Créer un signalement',
+            ])
         @endforelse
     </div>
 

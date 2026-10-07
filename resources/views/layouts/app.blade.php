@@ -86,6 +86,7 @@
                 <a href="{{ route('base-collaborative.index') }}">Base collaborative</a>
                 <a href="{{ route('alertes.index') }}">Alertes de sécurité</a>
                 <a href="{{ route('statistiques.index') }}">Statistiques</a>
+                <a href="{{ route('how-it-works') }}">Comment ça marche ?</a>
             </nav>
             <nav class="footer-column" aria-label="Informations légales">
                 <h2>Informations</h2>

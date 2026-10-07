@@ -80,7 +80,7 @@ class AnalyseController extends Controller
         // afficher des conseils : <<extend>> de Analyser un contenu, calculé simplement
         // à partir du score plutôt que par un nouvel appel IA (aucun coût supplémentaire)
         $risqueEleve = (float) $analyse->score_fiabilite >= config('sentinel_ia.seuil_risque_eleve', 70);
-        $signalementAutorise = (float) $analyse->score_fiabilite >= config('sentinel_ia.seuil_signalement', 60);
+        $signalementAutorise = $risqueEleve;
         $risqueModere = (float) $analyse->score_fiabilite >= config('sentinel_ia.seuil_risque_modere', 40);
         $scoreClass = $risqueEleve ? 'danger' : ($risqueModere ? 'warning' : 'safe');
 
@@ -90,6 +90,24 @@ class AnalyseController extends Controller
             default => 'Aucun indice fort détecté, restez tout de même prudent.',
         };
 
-        return view('analyses.show', compact('analyse', 'conseil', 'risqueEleve', 'signalementAutorise', 'scoreClass'));
+        [$niveauRisque, $resumeRisque, $gestes] = match ($scoreClass) {
+            'danger' => [
+                'Risque élevé',
+                'Des éléments importants justifient une vigilance immédiate avant toute interaction.',
+                ['Ne cliquez sur aucun lien et ne répondez pas dans la précipitation.', 'Ne communiquez ni code, ni mot de passe, ni information bancaire.', 'Conservez une capture ou le message, puis signalez-le.'],
+            ],
+            'warning' => [
+                'Risque modéré',
+                'Le contenu mérite une vérification indépendante avant de poursuivre.',
+                ['Contrôlez l’identité de l’expéditeur par un canal officiel.', 'Vérifiez le lien ou le numéro dans la base collaborative.', 'Attendez avant de partager une information sensible.'],
+            ],
+            default => [
+                'Risque faible',
+                'Aucun signal fort n’a été relevé, mais un score faible ne garantit jamais l’absence de fraude.',
+                ['Restez attentif à toute demande inhabituelle.', 'Vérifiez l’expéditeur avant un paiement ou un partage de données.', 'Relancez une analyse si le contenu évolue.'],
+            ],
+        };
+
+        return view('analyses.show', compact('analyse', 'conseil', 'risqueEleve', 'signalementAutorise', 'scoreClass', 'niveauRisque', 'resumeRisque', 'gestes'));
     }
 }

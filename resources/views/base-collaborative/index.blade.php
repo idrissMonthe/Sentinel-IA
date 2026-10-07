@@ -35,9 +35,13 @@
                 <a href="{{ route('base-collaborative.show', $entite) }}" class="btn btn-secondary" style="width: 100%; text-align: center; border: 1px solid var(--border-glow); margin-top: 15px;">Voir les détails</a>
             </div>
         @empty
-            <div class="card" style="grid-column: 1 / -1; text-align: center;">
-                <p>Aucun résultat trouvé pour cette recherche. Soyez tout de même prudent.</p>
-            </div>
+            @include('components.empty-state', [
+                'id' => 'search-empty-title', 'icon' => '⌕',
+                'title' => 'Aucun signalement similaire trouvé',
+                'message' => 'La base ne contient pas encore de résultat pour cette recherche. Cela ne garantit pas que le contenu est sûr : restez prudent.',
+                'actionUrl' => auth()->check() ? route('analyses.create') : route('register'),
+                'actionLabel' => auth()->check() ? 'Analyser ce contenu' : 'Créer un compte pour analyser',
+            ])
         @endforelse
     </div>
 

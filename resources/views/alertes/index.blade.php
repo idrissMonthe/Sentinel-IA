@@ -23,9 +23,13 @@
                 </div>
             </div>
         @empty
-            <div class="card text-center" style="padding: 40px;">
-                <p style="font-size: 1.2rem; color: var(--success);">Aucune alerte majeure en cours. La situation est calme !</p>
-            </div>
+            @include('components.empty-state', [
+                'id' => 'alerts-empty-title', 'icon' => '✓',
+                'title' => 'Aucune alerte majeure en cours',
+                'message' => 'La situation est calme pour le moment. Continuez à vérifier les contenus inhabituels avant d’agir.',
+                'actionUrl' => route('base-collaborative.index'),
+                'actionLabel' => 'Consulter la base collaborative', 'actionClass' => 'btn-secondary',
+            ])
         @endforelse
     </div>
 
