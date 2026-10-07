@@ -67,8 +67,12 @@ Route::middleware('auth')->prefix('profil')->name('profile.')->group(function ()
     Route::view('/edition', 'profile.edit')->name('edit'); // Route d'édition sécurisée
     Route::put('/', [ProfileController::class, 'update'])->name('update');
     Route::put('/mot-de-passe', [ProfileController::class, 'updatePassword'])->name('password.update');
+    Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
     Route::get('/historique', [ProfileController::class, 'historique'])->name('historique');
 });
+
+Route::view('/mentions-legales', 'legal.mentions')->name('legal.mentions');
+Route::view('/confidentialite', 'legal.confidentialite')->name('legal.confidentialite');
 
 /*
 |--------------------------------------------------------------------------

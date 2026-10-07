@@ -71,5 +71,22 @@
             </form>
         </div>
     </div>
+
+    <section class="danger-zone fade-in-element delay-3" aria-labelledby="suppression-compte-title">
+        <div>
+            <p class="danger-zone-eyebrow">Zone sensible</p>
+            <h2 id="suppression-compte-title">Supprimer mon compte</h2>
+            <p>Votre accès sera immédiatement désactivé. Vos signalements déjà publiés pourront être conservés afin de protéger la communauté.</p>
+        </div>
+        <form action="{{ route('profile.destroy') }}" method="POST" data-confirm="Cette action est définitive. Voulez-vous réellement supprimer votre compte Sentinel IA ?">
+            @csrf
+            @method('DELETE')
+            <div class="form-group">
+                <label for="delete_password">Confirmez avec votre mot de passe</label>
+                <input type="password" id="delete_password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-danger">Supprimer définitivement mon compte</button>
+        </form>
+    </section>
 </div>
 @endsection

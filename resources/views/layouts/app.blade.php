@@ -75,10 +75,28 @@
     <main id="contenu-principal" class="main-content container">@yield('content')</main>
 
     <footer class="site-footer">
-        <div class="container footer-inner">
-            <div><a href="{{ route('accueil') }}" class="brand-logo footer-brand">SENTINEL<span class="ia-text">IA</span></a><p class="footer-note">La vigilance numérique, pensée pour le Cameroun.</p></div>
-            <div class="footer-links"><a href="{{ route('base-collaborative.index') }}">Base collaborative</a><a href="{{ route('alertes.index') }}">Alertes</a><a href="{{ route('statistiques.index') }}">Statistiques</a></div>
-            <p class="footer-copyright">© {{ date('Y') }} MONTHE AHMED, Sentinel IA</p>
+        <div class="container footer-grid">
+            <div class="footer-intro">
+                <a href="{{ route('accueil') }}" class="brand-logo footer-brand">SENTINEL<span class="ia-text">IA</span></a>
+                <p>La vigilance numérique, pensée pour le Cameroun.</p>
+                <p class="footer-commitment">Prévenir, signaler et mieux comprendre les menaces numériques.</p>
+            </div>
+            <nav class="footer-column" aria-label="Explorer Sentinel IA">
+                <h2>Explorer</h2>
+                <a href="{{ route('base-collaborative.index') }}">Base collaborative</a>
+                <a href="{{ route('alertes.index') }}">Alertes de sécurité</a>
+                <a href="{{ route('statistiques.index') }}">Statistiques</a>
+            </nav>
+            <nav class="footer-column" aria-label="Informations légales">
+                <h2>Informations</h2>
+                <a href="{{ route('legal.mentions') }}">Mentions légales</a>
+                <a href="{{ route('legal.confidentialite') }}">Confidentialité</a>
+                @auth<a href="{{ route('profile.edit') }}">Mon compte</a>@else<a href="{{ route('login') }}">Se connecter</a>@endauth
+            </nav>
+        </div>
+        <div class="container footer-bottom">
+            <p>© {{ date('Y') }} Sentinel IA. Tous droits réservés.</p>
+            <p>Une plateforme d'intérêt général pour une navigation plus sûre.</p>
         </div>
     </footer>
 </body>

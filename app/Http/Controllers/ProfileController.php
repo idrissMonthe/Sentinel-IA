@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CompteSupprimeMail;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ProfileController extends Controller
 {
@@ -35,6 +38,39 @@ class ProfileController extends Controller
         $request->user()->update(['password' => $data['password']]);
 
         return back()->with('status', 'Mot de passe mis à jour.');
+    }
+
+    /** Supprime le compte après vérification du mot de passe. */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ], [
+            'password.current_password' => 'Le mot de passe saisi est incorrect.',
+        ]);
+
+        $user = $request->user();
+        $email = $user->email;
+        $prenom = $user->prenom;
+
+        Auth::logout();
+        $user->delete();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        try {
+            Mail::to($email)->send(new CompteSupprimeMail($prenom, $email));
+        } catch (\Throwable $e) {
+            Log::warning('Échec envoi e-mail de confirmation de suppression de compte.', [
+                'user_id' => $user->id,
+                'erreur' => $e->getMessage(),
+            ]);
+        }
+
+        return redirect()->route('accueil')->with(
+            'status',
+            'Votre compte a été supprimé. Un e-mail de confirmation vient de vous être envoyé.'
+        );
     }
 
     // ConsulterHistorique()

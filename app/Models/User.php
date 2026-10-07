@@ -11,10 +11,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasFactory, Notifiable, CanResetPassword;
+    use HasFactory, Notifiable, CanResetPassword, SoftDeletes;
     protected $fillable = [
         'nom',
         'prenom',
